@@ -17,6 +17,7 @@
     <button class="menu-toggle" onclick="toggleSidebar()">
         <i class="fas fa-bars"></i>
     </button>
+    <div class="sidebar-overlay" id="sidebar-overlay" onclick="toggleSidebar()"></div>
 
     <div class="app-container">
         <!-- Sidebar -->
@@ -159,9 +160,8 @@
             </div>
 
             <!-- Seção Pacientes -->
-            <div id="patients-section" class="section" style="display: none; width: 100%;">
-                <div
-                    style="display:flex; justify-content:space-between; align-items:center; margin-bottom:2rem; flex-wrap:wrap; gap:1rem;">
+            <div id="patients-section" class="section" style="display: none;">
+                <div class="section-header">
                     <div class="page-title">
                         <h1>Pacientes</h1>
                         <p>Gerencie seu cadastro de pacientes</p>
@@ -170,38 +170,33 @@
                         <i class="fas fa-plus"></i> Novo Paciente
                     </button>
                 </div>
-                <div
-                    style="background:var(--surface); border-radius:16px; padding:1.5rem; box-shadow:var(--shadow); border:1px solid var(--border); width:100%; box-sizing:border-box;">
-                    <div style="position:relative; margin-bottom:1.5rem; width:100%; display:block;">
+                <div class="section-card">
+                    <div class="search-box">
                         <i class="fas fa-search"
                             style="position:absolute; left:1rem; top:50%; transform:translateY(-50%); color:var(--text-light); z-index:1;"></i>
-                        <input type="text" placeholder="Buscar paciente..." id="patient-search"
-                            style="width:100%; padding:0.875rem 1rem 0.875rem 2.75rem; border:1px solid var(--border); border-radius:12px; font-family:inherit; font-size:0.9rem; background:var(--bg); box-sizing:border-box; outline:none; display:block;">
+                        <input type="text" placeholder="Buscar paciente..." id="patient-search" class="search-input">
                     </div>
                     <div class="patient-list" id="patient-list" style="width:100%;"></div>
                 </div>
             </div>
 
             <!-- Seção Histórico -->
-            <div id="history-section" class="section" style="display: none; width: 100%;">
-                <div
-                    style="display:flex; justify-content:space-between; align-items:center; margin-bottom:2rem; flex-wrap:wrap; gap:1rem;">
+            <div id="history-section" class="section" style="display: none;">
+                <div class="section-header">
                     <div class="page-title">
                         <h1>Histórico de Consultas</h1>
                         <p>Visualize todas as consultas realizadas e canceladas</p>
                     </div>
                 </div>
-                <div
-                    style="background:var(--surface); border-radius:16px; padding:1.5rem; box-shadow:var(--shadow); border:1px solid var(--border); width:100%; box-sizing:border-box;">
-                    <!-- Busca -->
-                    <div style="position:relative; margin-bottom:1rem; width:100%; display:block;">
+                <div class="section-card">
+                    <div class="search-box">
                         <i class="fas fa-search"
                             style="position:absolute; left:1rem; top:50%; transform:translateY(-50%); color:var(--text-light); z-index:1;"></i>
-                        <input type="text" placeholder="Buscar por paciente, data ou horário..." id="history-search"
-                            style="width:100%; padding:0.875rem 1rem 0.875rem 2.75rem; border:1px solid var(--border); border-radius:12px; font-family:inherit; font-size:0.9rem; background:var(--bg); box-sizing:border-box; outline:none; display:block;">
+                        <input type="text" placeholder="Buscar por paciente..." id="history-search"
+                            class="search-input">
                     </div>
                     <!-- Filtros de status -->
-                    <div style="display:flex; gap:0.5rem; margin-bottom:1.5rem; flex-wrap:wrap;">
+                    <div class="filter-group">
                         <button onclick="filterHistory('all')" id="filter-all"
                             style="padding:0.4rem 1rem; border-radius:20px; border:none; font-family:inherit; font-size:0.83rem; font-weight:600; cursor:pointer; background:var(--primary); color:#fff; transition:all 0.2s;">
                             Todos
@@ -253,7 +248,7 @@
                     </div>
                 </div>
 
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-top: 2rem;">
+                <div class="reports-grid-container">
                     <div class="panel-card">
                         <h3 class="panel-title" style="margin-bottom: 1.5rem;">Faturamento por Categoria</h3>
                         <div id="revenue-by-category" style="display: flex; flex-direction: column; gap: 1rem;">

@@ -192,20 +192,18 @@ function renderPatientList(search = '') {
     container.innerHTML = filtered.map(p => `
         <div class="patient-item">
             <div class="patient-avatar">${p.name.split(' ').map(n => n[0]).join('').substring(0, 2)}</div>
-            <div style="flex:1">
-                <div style="font-weight:600;">${p.name}</div>
-                <div style="color:var(--text-light);">${p.phone}</div>
+            <div class="patient-info">
+                <div class="patient-name-text">${p.name}</div>
+                <div class="patient-phone-text">${p.phone}</div>
             </div>
-            <div style="text-align:right;">
-                <div style="font-size:0.75rem; color:var(--text-light);">Idade</div>
-                <div style="font-weight:600;">${p.age ? p.age + ' anos' : '—'}</div>
+            <div class="patient-age-box">
+                <div class="patient-age-text">${p.age ? p.age + ' anos' : '—'}</div>
             </div>
-            <div style="display:flex; gap:8px; margin-left:16px;">
-                <button class="btn btn-secondary" style="padding:6px 10px;" onclick="openPatientModal(${p.id})">
+            <div class="patient-actions">
+                <button class="btn btn-secondary" onclick="openPatientModal(${p.id})">
                     <i class="fas fa-edit"></i>
                 </button>
-                <button style="padding:6px 10px; color:var(--danger); border:1px solid var(--danger); background:transparent;" 
-                        onclick="deletePatient(${p.id})">
+                <button class="btn btn-danger-outline" onclick="deletePatient(${p.id})">
                     <i class="fas fa-trash"></i>
                 </button>
             </div>
@@ -282,7 +280,7 @@ function renderHistory(search = '', statusFilter = 'all') {
             const isCancelled = app.status === 'cancelled';
             const borderColor = isCancelled ? 'var(--danger)' : 'var(--success)';
             return `
-                <div class="appointment-item ${isCancelled ? 'cancelled-item' : ''}" style="border-left: 4px solid ${borderColor}">
+                <div class="appointment-item ${isCancelled ? 'cancelled-item' : ''}" data-status="${app.status}">
                     <div class="appointment-time">
                         <span class="time-start">${formatDate(app.date)}</span>
                         <span class="time-end">${app.time}</span>
@@ -291,7 +289,7 @@ function renderHistory(search = '', statusFilter = 'all') {
                         <div class="patient-name">${patient ? patient.name : 'Paciente removido'}</div>
                         <div class="appointment-type">${appointmentTypes[app.type] || app.type}</div>
                     </div>
-                    <div style="display:flex; align-items:center; gap:8px;">
+                    <div class="appointment-actions">
                         <span class="status-badge status-${app.status}">
                             ${isCancelled ? 'Cancelado' : 'Confirmado'}
                         </span>
@@ -387,7 +385,7 @@ function renderTodayAppointments() {
                     <div class="patient-name">${p ? p.name : 'Paciente removido'}</div>
                     <div class="appointment-type">${appointmentTypes[app.type]}</div>
                 </div>
-                <div style="display:flex; align-items:center; gap:8px;">
+                <div class="appointment-actions">
                     <span class="status-badge status-${app.status}">${isCancelled ? 'Cancelado' : (app.status === 'confirmed' ? 'Confirmado' : 'Pendente')}</span>
                     ${!isCancelled ? `<button class="btn-cancel-appt" onclick="confirmCancelAppointment(${app.id})" title="Cancelar consulta"><i class="fas fa-ban"></i></button>` : ''}
                 </div>
@@ -413,7 +411,7 @@ function renderUpcomingAppointments() {
                     <div class="patient-name">${p ? p.name : 'Paciente removido'}</div>
                     <div class="appointment-type">${appointmentTypes[app.type]}</div>
                 </div>
-                <div style="display:flex; align-items:center; gap:8px;">
+                <div class="appointment-actions">
                     ${isCancelled ? '<span class="status-badge status-cancelled">Cancelado</span>' : `<button class="btn-cancel-appt" onclick="confirmCancelAppointment(${app.id})" title="Cancelar consulta"><i class="fas fa-ban"></i></button>`}
                 </div>
             </div>
@@ -627,7 +625,10 @@ function formatPhone(value) {
 }
 
 function toggleSidebar() {
-    document.getElementById('sidebar').classList.toggle('active');
+    const sidebar = document.getElementById('sidebar');
+    const overlay = document.getElementById('sidebar-overlay');
+    sidebar.classList.toggle('active');
+    overlay?.classList.toggle('active');
 }
 
 function showSection(section) {
@@ -642,6 +643,12 @@ function showSection(section) {
     document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
     const link = document.querySelector(`.nav-link[onclick="showSection('${section}')"]`);
     if (link) link.classList.add('active');
+
+    // Fechar sidebar no mobile após clique
+    if (window.innerWidth <= 768) {
+        document.getElementById('sidebar').classList.remove('active');
+        document.getElementById('sidebar-overlay')?.classList.remove('active');
+    }
 }
 
 function saveData() {
