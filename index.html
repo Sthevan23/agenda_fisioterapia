@@ -313,6 +313,12 @@
                 <form id="appointmentForm">
                     <div class="form-group">
                         <label class="form-label">Paciente</label>
+                        <div class="search-box" style="margin-bottom: 0.5rem; position: relative;">
+                            <i class="fas fa-search"
+                                style="position:absolute; left:1rem; top:50%; transform:translateY(-50%); color:var(--text-light); z-index:1;"></i>
+                            <input type="text" placeholder="Filtrar por nome..." id="patient-select-search"
+                                class="search-input" style="padding-left: 2.5rem; width: 100%;">
+                        </div>
                         <select class="form-select" id="patientSelect" required>
                             <option value="">Selecione um paciente</option>
                         </select>
