@@ -2,7 +2,8 @@
 # Execute: .\deploy.ps1
 
 param(
-    [string]$Password = $env:HOSTINGER_FTP_PASS
+    [string]$Password = $env:HOSTINGER_FTP_PASS,
+    [string]$RemoteRoot = "/domains/fisio.sthevandev.com.br/public_html"
 )
 
 $FtpHost = "ftp.sthevandev.com.br"
@@ -18,7 +19,7 @@ if (-not $Password) {
 $FtpPassPlain = $Password
 
 $LocalRoot = $PSScriptRoot
-$RemoteRoot = "/public_html"
+$RemoteRoot = $RemoteRoot.TrimEnd('/')
 
 function Upload-FtpFile($LocalFile, $RemotePath) {
     $uri = "ftp://${FtpHost}${RemotePath}"
@@ -52,26 +53,49 @@ function Ensure-FtpDir($RemoteDir) {
 Write-Host "Deploy FisioAgenda -> $FtpHost$RemoteRoot"
 Write-Host ""
 
-$dirs = @("/public_html/css", "/public_html/js", "/public_html/api", "/public_html/api/lib", "/public_html/api/routes")
+$stylesDir = Join-Path $LocalRoot "styles.css"
+if (-not (Test-Path $stylesDir)) {
+    New-Item -ItemType Directory -Path $stylesDir | Out-Null
+}
+Copy-Item (Join-Path $LocalRoot "css\global.css") (Join-Path $stylesDir "index.css") -Force
+Write-Host "CSS sincronizado: css/global.css -> styles.css/index.css"
+Write-Host ""
+
+$configRel = "api\config.php"
+if (-not (Test-Path (Join-Path $LocalRoot $configRel)) -and (Test-Path (Join-Path $LocalRoot "deploy-pack\api\config.php"))) {
+    Write-Host "Usando deploy-pack\api\config.php para upload (api\config.php local ausente)."
+    $configRel = "deploy-pack\api\config.php"
+}
+
+$dirs = @(
+    "$RemoteRoot/css",
+    "$RemoteRoot/js",
+    "$RemoteRoot/styles.css",
+    "$RemoteRoot/api",
+    "$RemoteRoot/api/lib",
+    "$RemoteRoot/api/routes"
+)
 foreach ($d in $dirs) { Ensure-FtpDir $d }
 
 $files = @(
-    @("index.html", "/public_html/index.html"),
-    @(".htaccess", "/public_html/.htaccess"),
-    @("css\main.css", "/public_html/css/main.css"),
-    @("css\global.css", "/public_html/css/global.css"),
-    @("api\index.php", "/public_html/api/index.php"),
-    @("api\config.php", "/public_html/api/config.php"),
-    @("api\database.sql", "/public_html/api/database.sql"),
-    @("api\.htaccess", "/public_html/api/.htaccess"),
-    @("api\lib\db.php", "/public_html/api/lib/db.php"),
-    @("api\lib\response.php", "/public_html/api/lib/response.php"),
-    @("api\routes\patients.php", "/public_html/api/routes/patients.php"),
-    @("api\routes\appointments.php", "/public_html/api/routes/appointments.php")
+    @("index.html", "$RemoteRoot/index.html"),
+    @(".htaccess", "$RemoteRoot/.htaccess"),
+    @("api.php", "$RemoteRoot/api.php"),
+    @("css\main.css", "$RemoteRoot/css/main.css"),
+    @("css\global.css", "$RemoteRoot/css/global.css"),
+    @("styles.css\index.css", "$RemoteRoot/styles.css/index.css"),
+    @("api\index.php", "$RemoteRoot/api/index.php"),
+    @($configRel, "$RemoteRoot/api/config.php"),
+    @("api\database.sql", "$RemoteRoot/api/database.sql"),
+    @("api\.htaccess", "$RemoteRoot/api/.htaccess"),
+    @("api\lib\db.php", "$RemoteRoot/api/lib/db.php"),
+    @("api\lib\response.php", "$RemoteRoot/api/lib/response.php"),
+    @("api\routes\patients.php", "$RemoteRoot/api/routes/patients.php"),
+    @("api\routes\appointments.php", "$RemoteRoot/api/routes/appointments.php")
 )
 
 Get-ChildItem "$LocalRoot\js\*.js" | ForEach-Object {
-    $files += @(@($_.FullName.Substring($LocalRoot.Length + 1), "/public_html/js/$($_.Name)"))
+    $files += @(@($_.FullName.Substring($LocalRoot.Length + 1), "$RemoteRoot/js/$($_.Name)"))
 }
 
 foreach ($f in $files) {
@@ -85,5 +109,5 @@ foreach ($f in $files) {
 
 Write-Host ""
 Write-Host "Deploy concluido!"
-Write-Host "Teste: https://sthevandev.com.br/api/health"
-Write-Host "Site:  https://sthevandev.com.br"
+Write-Host "Teste: https://fisio.sthevandev.com.br/api/health"
+Write-Host "Site:  https://fisio.sthevandev.com.br"

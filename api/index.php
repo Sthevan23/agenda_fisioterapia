@@ -23,13 +23,20 @@ header('Content-Type: application/json; charset=utf-8');
 
 $allowedOrigins = [
     'https://fisio.sthevandev.com.br',
+    'http://fisio.sthevandev.com.br',
     'https://sthevandev.com.br',
     'http://localhost:8080',
     'http://127.0.0.1:8080',
 ];
 $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
-if ($origin !== '' && in_array($origin, $allowedOrigins, true)) {
+$originAllowed = $origin !== '' && (
+    in_array($origin, $allowedOrigins, true)
+    || preg_match('#^https://([a-z0-9-]+\.)?sthevandev\.com\.br$#i', $origin) === 1
+);
+
+if ($originAllowed) {
     header('Access-Control-Allow-Origin: ' . $origin);
+    header('Vary: Origin');
 } else {
     header('Access-Control-Allow-Origin: ' . CORS_ORIGIN);
 }

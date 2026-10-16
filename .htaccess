@@ -1,7 +1,12 @@
 RewriteEngine On
+RewriteBase /
 
-# API REST
+# API REST (Hostinger / subdomínio fisio)
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
 RewriteRule ^api/?(.*)$ api/index.php [QSA,L]
 
-# Página inicial
+# Fallback se index.php da pasta api não for encontrado pelo servidor
+RewriteRule ^api\.php$ api/index.php [QSA,L]
+
 DirectoryIndex index.html

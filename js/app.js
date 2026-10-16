@@ -5,7 +5,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         console.error(error);
         loadFromLocalStorage();
         setApiBanner(true);
-        showToast('API indisponível — usando dados deste navegador.', 'error');
+        showToast('API offline: cadastros ficam só neste aparelho até subir a pasta api/.', 'error');
     }
 
     updateViewButtons();

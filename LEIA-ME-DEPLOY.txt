@@ -21,7 +21,11 @@ PASSO 2 - CONFIGURAR API
 
 PASSO 3 - ENVIAR ARQUIVOS
 -------------------------
-Envie TUDO para public_html/ na Hostinger:
+Subdominio fisio: envie TUDO para
+  domains/fisio.sthevandev.com.br/public_html/
+(dominio principal usa public_html/ na raiz)
+
+Arquivos:
   - index.html
   - .htaccess
   - pasta css/

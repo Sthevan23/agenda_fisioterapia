@@ -91,12 +91,12 @@ async function savePatient() {
             const patient = patients.find(p => p.id == editId);
             if (patient) {
                 Object.assign(patient, payload);
-                showToast('Paciente atualizado (salvo neste navegador)!');
+                showToast('Paciente atualizado só neste aparelho — suba a pasta api/ no Hostinger.', 'error');
             }
         } else {
             const newId = patients.length ? Math.max(...patients.map(p => p.id)) + 1 : 1;
             patients.push({ id: newId, ...payload });
-            showToast('Paciente adicionado (salvo neste navegador)!');
+            showToast('Salvo só neste celular. A API ainda não está no ar (MySQL).', 'error');
         }
 
         if (!useApiMode) saveLocalStorage();
@@ -132,6 +132,22 @@ function renderPatientList(search = '') {
         p.name.toLowerCase().includes(search.toLowerCase()) ||
         p.phone.includes(search)
     ).sort((a, b) => a.name.localeCompare(b.name));
+
+    if (filtered.length === 0) {
+        const offlineHint = useApiMode
+            ? ''
+            : '<p class="empty-state-hint">Os dados estão só neste aparelho até a API estar no ar.</p>';
+        container.innerHTML = `
+            <div class="empty-state">
+                <i class="fas fa-user-plus"></i>
+                <p>${search ? 'Nenhum paciente encontrado.' : 'Nenhum paciente cadastrado ainda.'}</p>
+                ${offlineHint}
+                <button type="button" class="btn btn-primary empty-state-cta" onclick="openPatientModal()">
+                    <i class="fas fa-plus"></i> Cadastrar primeiro paciente
+                </button>
+            </div>`;
+        return;
+    }
 
     container.innerHTML = filtered.map(p => {
         let gender = p.gender;

@@ -9,6 +9,7 @@ function getApiCandidates() {
         fromMeta,
         '/api/index.php',
         '/api',
+        '/api.php',
     ].filter((value, index, list) => list.indexOf(value) === index);
 }
 
@@ -71,8 +72,10 @@ function setApiBanner(offline, healthPayload = null) {
         banner.innerHTML = `
             <i class="fas fa-triangle-exclamation"></i>
             <span>
-                <strong>API offline:</strong> os dados estão sendo salvos só neste navegador.
-                Envie a pasta <code>api/</code> para o Hostinger (subdomínio fisio) para gravar no MySQL.
+                <strong>Banco offline:</strong> os cadastros ficam só neste celular/navegador.
+                No Hostinger, envie a pasta <code>api/</code> + <code>.htaccess</code> para
+                <code>domains/fisio.sthevandev.com.br/public_html</code> e teste
+                <a href="/api/health" target="_blank" rel="noopener">/api/health</a>.
             </span>
         `;
         return;
