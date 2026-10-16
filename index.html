@@ -4,43 +4,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="api-base" content="/api">
     <title>FisioAgenda - Gestão de Consultas</title>
 
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
-    <!-- Use o nome do seu arquivo CSS -->
-    <link rel="stylesheet" href="styles.css/index.css"> <!-- ou styles.css -->
-    <style>
-        .age-badge {
-            padding: 0.2rem 0.6rem;
-            border-radius: 12px;
-            font-size: 0.75rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            display: inline-block !important;
-            margin-top: 2px;
-            line-height: normal;
-        }
-
-        .age-child {
-            background: #e0f2fe !important;
-            color: #0369a1 !important;
-        }
-
-        .age-adult {
-            background: #dcfce7 !important;
-            color: #15803d !important;
-        }
-
-        .age-elderly {
-            background: #fdf2f8 !important;
-            color: #be185d !important;
-        }
-    </style>
+    <link rel="stylesheet" href="css/main.css">
 </head>
 
 <body>
+    <div id="api-offline-banner" class="api-offline-banner hidden" role="alert"></div>
     <button class="menu-toggle" onclick="toggleSidebar()">
         <i class="fas fa-bars"></i>
     </button>
@@ -57,31 +31,31 @@
             <nav>
                 <ul class="nav-menu">
                     <li class="nav-item">
-                        <a class="nav-link active" onclick="showSection('dashboard')">
+                        <a class="nav-link active" data-section="dashboard" onclick="showSection('dashboard')">
                             <i class="fas fa-calendar-check"></i>
                             <span>Agenda</span>
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" onclick="showSection('patients')">
+                        <a class="nav-link" data-section="patients" onclick="showSection('patients')">
                             <i class="fas fa-users"></i>
                             <span>Pacientes</span>
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" onclick="showSection('history')">
+                        <a class="nav-link" data-section="history" onclick="showSection('history')">
                             <i class="fas fa-file-medical"></i>
                             <span>Histórico</span>
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" onclick="showSection('reports')">
+                        <a class="nav-link" data-section="reports" onclick="showSection('reports')">
                             <i class="fas fa-chart-line"></i>
                             <span>Relatórios</span>
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" onclick="showSection('settings')">
+                        <a class="nav-link" data-section="settings" onclick="showSection('settings')">
                             <i class="fas fa-cog"></i>
                             <span>Configurações</span>
                         </a>
@@ -95,7 +69,7 @@
                     <div class="user-name">Dr. Thaís</div>
                     <div class="user-role">Fisioterapeuta</div>
                 </div>
-                <i class="fas fa-sign-out-alt" style="cursor: pointer; color: var(--text-light);"></i>
+                <i class="fas fa-sign-out-alt user-logout"></i>
             </div>
         </aside>
 
@@ -108,8 +82,11 @@
                         <h1>Agenda de Consultas</h1>
                         <p>Gerencie seus atendimentos e horários</p>
                     </div>
-                    <div class="header-actions">
-                        <button class="btn btn-secondary" onclick="changeView('week')">
+                    <div class="header-actions view-toggle">
+                        <button type="button" class="btn btn-secondary active" id="btn-view-month" onclick="changeView('month')">
+                            <i class="fas fa-calendar"></i> Mês
+                        </button>
+                        <button type="button" class="btn btn-secondary" id="btn-view-week" onclick="changeView('week')">
                             <i class="fas fa-calendar-week"></i> Semana
                         </button>
                         <button class="btn btn-primary" onclick="openModal()">
@@ -157,10 +134,10 @@
                     <div class="calendar-container">
                         <div class="calendar-header">
                             <div class="calendar-nav">
-                                <button class="nav-btn" onclick="changeMonth(-1)"><i
+                                <button type="button" class="nav-btn" onclick="changePeriod(-1)"><i
                                         class="fas fa-chevron-left"></i></button>
                                 <h2 class="calendar-title" id="current-month">Fevereiro 2026</h2>
-                                <button class="nav-btn" onclick="changeMonth(1)"><i
+                                <button type="button" class="nav-btn" onclick="changePeriod(1)"><i
                                         class="fas fa-chevron-right"></i></button>
                             </div>
                             <button class="btn btn-secondary" onclick="goToToday()">Hoje</button>
@@ -187,7 +164,7 @@
             </div>
 
             <!-- Seção Pacientes -->
-            <div id="patients-section" class="section" style="display: none;">
+            <div id="patients-section" class="section hidden">
                 <div class="section-header">
                     <div class="page-title">
                         <h1>Pacientes</h1>
@@ -199,16 +176,15 @@
                 </div>
                 <div class="section-card">
                     <div class="search-box">
-                        <i class="fas fa-search"
-                            style="position:absolute; left:1rem; top:50%; transform:translateY(-50%); color:var(--text-light); z-index:1;"></i>
+                        <i class="fas fa-search"></i>
                         <input type="text" placeholder="Buscar paciente..." id="patient-search" class="search-input">
                     </div>
-                    <div class="patient-list" id="patient-list" style="width:100%;"></div>
+                    <div class="patient-list" id="patient-list"></div>
                 </div>
             </div>
 
             <!-- Seção Histórico -->
-            <div id="history-section" class="section" style="display: none;">
+            <div id="history-section" class="section hidden">
                 <div class="section-header">
                     <div class="page-title">
                         <h1>Histórico de Consultas</h1>
@@ -217,34 +193,22 @@
                 </div>
                 <div class="section-card">
                     <div class="search-box">
-                        <i class="fas fa-search"
-                            style="position:absolute; left:1rem; top:50%; transform:translateY(-50%); color:var(--text-light); z-index:1;"></i>
+                        <i class="fas fa-search"></i>
                         <input type="text" placeholder="Buscar por paciente..." id="history-search"
                             class="search-input">
                     </div>
-                    <!-- Filtros de status -->
                     <div class="filter-group">
-                        <button onclick="filterHistory('all')" id="filter-all"
-                            style="padding:0.4rem 1rem; border-radius:20px; border:none; font-family:inherit; font-size:0.83rem; font-weight:600; cursor:pointer; background:var(--primary); color:#fff; transition:all 0.2s;">
-                            Todos
-                        </button>
-                        <button onclick="filterHistory('confirmed')" id="filter-confirmed"
-                            style="padding:0.4rem 1rem; border-radius:20px; border:1px solid var(--border); font-family:inherit; font-size:0.83rem; font-weight:600; cursor:pointer; background:transparent; color:var(--text-light); transition:all 0.2s;">
-                            ✅ Confirmados
-                        </button>
-                        <button onclick="filterHistory('cancelled')" id="filter-cancelled"
-                            style="padding:0.4rem 1rem; border-radius:20px; border:1px solid var(--border); font-family:inherit; font-size:0.83rem; font-weight:600; cursor:pointer; background:transparent; color:var(--text-light); transition:all 0.2s;">
-                            🚫 Cancelados
-                        </button>
+                        <button class="filter-btn active" onclick="filterHistory('all')" id="filter-all">Todos</button>
+                        <button class="filter-btn" onclick="filterHistory('confirmed')" id="filter-confirmed">✅ Confirmados</button>
+                        <button class="filter-btn" onclick="filterHistory('cancelled')" id="filter-cancelled">🚫 Cancelados</button>
                     </div>
-                    <!-- Lista -->
-                    <div id="history-list" style="display:flex; flex-direction:column; gap:0.75rem;"></div>
+                    <div id="history-list" class="history-list"></div>
                 </div>
             </div>
 
             <!-- Seção Relatórios -->
-            <div id="reports-section" class="section" style="display: none; width: 100%;">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:2rem;">
+            <div id="reports-section" class="section hidden">
+                <div class="section-header">
                     <div class="page-title">
                         <h1>Relatórios e Financeiro</h1>
                         <p>Acompanhe o faturamento e desempenho</p>
@@ -277,22 +241,16 @@
 
                 <div class="reports-grid-container">
                     <div class="panel-card">
-                        <h3 class="panel-title" style="margin-bottom: 1.5rem;">Faturamento por Categoria</h3>
-                        <div id="revenue-by-category" style="display: flex; flex-direction: column; gap: 1rem;">
-                            <!-- Dinâmico -->
-                        </div>
+                        <h3 class="panel-title panel-title--spaced">Faturamento por Categoria</h3>
+                        <div id="revenue-by-category" class="report-list"></div>
                     </div>
                     <div class="panel-card">
-                        <h3 class="panel-title" style="margin-bottom: 1.5rem;">Faturamento por Pagamento</h3>
-                        <div id="revenue-by-payment" style="display: flex; flex-direction: column; gap: 1rem;">
-                            <!-- Dinâmico -->
-                        </div>
+                        <h3 class="panel-title panel-title--spaced">Faturamento por Pagamento</h3>
+                        <div id="revenue-by-payment" class="report-list"></div>
                     </div>
                     <div class="panel-card">
-                        <h3 class="panel-title" style="margin-bottom: 1.5rem;">Distribuição de Atendimentos</h3>
-                        <div id="atends-by-category" style="display: flex; flex-direction: column; gap: 1rem;">
-                            <!-- Dinâmico -->
-                        </div>
+                        <h3 class="panel-title panel-title--spaced">Distribuição de Atendimentos</h3>
+                        <div id="atends-by-category" class="report-list"></div>
                     </div>
                 </div>
             </div>
@@ -302,7 +260,7 @@
 
     <!-- Modal Nova Consulta -->
     <div class="modal-overlay" id="appointmentModal">
-        <div class="modal">
+        <div class="modal modal--lg">
             <div class="modal-header">
                 <h2 class="modal-title">Agendar Nova Consulta</h2>
                 <button class="modal-close" onclick="closeModal()">
@@ -313,21 +271,45 @@
                 <form id="appointmentForm">
                     <div class="form-group">
                         <label class="form-label">Paciente</label>
-                        <div class="search-box" style="margin-bottom: 0.5rem; position: relative;">
-                            <i class="fas fa-search"
-                                style="position:absolute; left:1rem; top:50%; transform:translateY(-50%); color:var(--text-light); z-index:1;"></i>
+                        <div class="search-box search-box--compact">
+                            <i class="fas fa-search"></i>
                             <input type="text" placeholder="Filtrar por nome..." id="patient-select-search"
-                                class="search-input" style="padding-left: 2.5rem; width: 100%;">
+                                class="search-input search-input--with-icon">
                         </div>
                         <select class="form-select" id="patientSelect" required>
                             <option value="">Selecione um paciente</option>
                         </select>
                     </div>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label class="form-label">Data</label>
-                            <input type="date" class="form-input" id="appointmentDate" required>
+                    <div class="form-group">
+                        <label class="form-label">
+                            Dias do mês
+                            <small class="form-hint">Clique nos dias para marcar ou desmarcar</small>
+                        </label>
+                        <div class="modal-picker">
+                            <div class="modal-picker-header">
+                                <button type="button" class="nav-btn" onclick="changeModalPickerMonth(-1)" aria-label="Mês anterior">
+                                    <i class="fas fa-chevron-left"></i>
+                                </button>
+                                <span class="modal-picker-title" id="modal-picker-title">—</span>
+                                <button type="button" class="nav-btn" onclick="changeModalPickerMonth(1)" aria-label="Próximo mês">
+                                    <i class="fas fa-chevron-right"></i>
+                                </button>
+                            </div>
+                            <div class="modal-picker-grid" id="modal-month-picker"></div>
+                            <div class="modal-picker-actions">
+                                <button type="button" class="btn btn-secondary btn-sm" onclick="selectWeekdaysInModalMonth()">
+                                    <i class="fas fa-briefcase"></i> Seg–Sex deste mês
+                                </button>
+                                <button type="button" class="btn btn-outline btn-sm" onclick="clearAppointmentDates()">
+                                    Limpar datas
+                                </button>
+                            </div>
                         </div>
+                        <p class="selected-dates-count" id="selected-dates-count">0 dias selecionados</p>
+                        <div id="selected-dates-chips" class="date-chips"></div>
+                        <input type="hidden" id="appointmentDate">
+                    </div>
+                    <div class="form-row">
                         <div class="form-group">
                             <label class="form-label">Tipo de Consulta</label>
                             <select class="form-select" id="appointmentType" required>
@@ -376,7 +358,7 @@
             </div>
             <div class="modal-footer">
                 <button class="btn btn-outline" onclick="closeModal()">Cancelar</button>
-                <button class="btn btn-primary" onclick="saveAppointment()">
+                <button type="button" class="btn btn-primary" id="btn-save-appointment" onclick="saveAppointment()">
                     <i class="fas fa-check"></i> Confirmar
                 </button>
             </div>
@@ -404,33 +386,25 @@
                         <input type="tel" class="form-input" id="patientPhone" placeholder="(31) 99999-9999" required>
                     </div>
                     <div class="form-group">
-                        <label class="form-label">Idade <small id="age-category-preview"
-                                style="margin-left:8px; font-weight:700;"></small></label>
+                        <label class="form-label">Idade <small id="age-category-preview" class="age-preview"></small></label>
                         <input type="number" class="form-input" id="patientAge" placeholder="Ex: 35" min="0" max="120">
                     </div>
                     <div class="form-group">
                         <label class="form-label">Gênero</label>
-                        <div style="display: flex; gap: 15px; margin-top: 5px;">
-                            <label
-                                style="display: flex; align-items: center; gap: 5px; cursor: pointer; color: var(--text-primary);">
-                                <input type="radio" name="gender" value="masculino" checked
-                                    style="accent-color: #3498db;"> Homem
+                        <div class="gender-options">
+                            <label class="gender-option">
+                                <input type="radio" name="gender" value="masculino" checked> Homem
                             </label>
-                            <label
-                                style="display: flex; align-items: center; gap: 5px; cursor: pointer; color: var(--text-primary);">
-                                <input type="radio" name="gender" value="feminino" style="accent-color: #ff6b81;">
-                                Mulher
+                            <label class="gender-option gender-option--female">
+                                <input type="radio" name="gender" value="feminino"> Mulher
                             </label>
                         </div>
                     </div>
                 </form>
             </div>
             <div class="modal-footer">
-                <button class="btn btn-outline" onclick="closePatientModal()"
-                    style="margin-right: auto;">Cancelar</button>
-                <button id="btn-delete-patient" class="btn"
-                    style="display:none; color:var(--danger); border:1px solid var(--danger); background:transparent;"
-                    onclick="deletePatientFromModal()">
+                <button class="btn btn-outline btn-cancel-left" onclick="closePatientModal()">Cancelar</button>
+                <button id="btn-delete-patient" class="btn btn-delete hidden" onclick="deletePatientFromModal()">
                     <i class="fas fa-trash"></i> Excluir
                 </button>
                 <button class="btn btn-primary" onclick="savePatient()">
@@ -442,41 +416,32 @@
 
     <!-- Modal Cancelar Consulta -->
     <div class="modal-overlay" id="cancelModal">
-        <div class="modal" style="max-width: 420px;">
-            <div class="modal-header"
-                style="background: linear-gradient(135deg, #ff4757, #c0392b); border-radius: 16px 16px 0 0;">
-                <h2 class="modal-title" style="color:#fff; display:flex; align-items:center; gap:10px;">
+        <div class="modal modal--sm">
+            <div class="modal-header modal-header--danger">
+                <h2 class="modal-title">
                     <i class="fas fa-ban"></i> Cancelar Consulta
                 </h2>
-                <button class="modal-close" onclick="closeCancelModal()" style="color:#fff; opacity:0.8;">
+                <button class="modal-close" onclick="closeCancelModal()">
                     <i class="fas fa-times"></i>
                 </button>
             </div>
-            <div class="modal-body" style="text-align:center; padding: 2rem 1.5rem;">
-                <div
-                    style="width:70px; height:70px; background: rgba(255,71,87,0.12); border-radius:50%; display:flex; align-items:center; justify-content:center; margin:0 auto 1.2rem;">
-                    <i class="fas fa-calendar-xmark" style="font-size:2rem; color:#ff4757;"></i>
+            <div class="modal-body modal-body--center">
+                <div class="cancel-icon-wrap">
+                    <i class="fas fa-calendar-xmark"></i>
                 </div>
-                <p style="font-size:1rem; color:var(--text-light); margin-bottom:1rem;">Tem certeza que deseja cancelar
-                    a consulta de</p>
-                <p style="font-size:1.15rem; font-weight:700; color:var(--text-primary); margin-bottom:0.4rem;"
-                    id="cancel-patient-name">—</p>
-                <p style="font-size:0.9rem; color:var(--text-light); margin-bottom:0.3rem;"><i
-                        class="fas fa-calendar-day" style="margin-right:5px; color:#ff4757;"></i><span
-                        id="cancel-appt-date">—</span></p>
-                <p style="font-size:0.9rem; color:var(--text-light);"><i class="fas fa-stethoscope"
-                        style="margin-right:5px; color:#ff4757;"></i><span id="cancel-appt-type">—</span></p>
-                <p
-                    style="margin-top:1.2rem; font-size:0.82rem; color:#ff4757; background:rgba(255,71,87,0.08); padding:10px 14px; border-radius:8px;">
+                <p class="cancel-text">Tem certeza que deseja cancelar a consulta de</p>
+                <p class="cancel-patient-name" id="cancel-patient-name">—</p>
+                <p class="cancel-detail"><i class="fas fa-calendar-day"></i><span id="cancel-appt-date">—</span></p>
+                <p class="cancel-detail"><i class="fas fa-stethoscope"></i><span id="cancel-appt-type">—</span></p>
+                <p class="cancel-warning">
                     <i class="fas fa-triangle-exclamation"></i> Esta ação não pode ser desfeita.
                 </p>
             </div>
-            <div class="modal-footer" style="gap:12px;">
-                <button class="btn btn-outline" onclick="closeCancelModal()" style="flex:1;">
+            <div class="modal-footer modal-footer--split">
+                <button class="btn btn-outline" onclick="closeCancelModal()">
                     <i class="fas fa-arrow-left"></i> Voltar
                 </button>
-                <button class="btn" onclick="executeCancelAppointment()"
-                    style="flex:1; background:linear-gradient(135deg,#ff4757,#c0392b); color:#fff; border:none;">
+                <button class="btn btn-danger-fill" onclick="executeCancelAppointment()">
                     <i class="fas fa-ban"></i> Confirmar Cancelamento
                 </button>
             </div>
@@ -485,7 +450,7 @@
 
     <!-- Modal Editar Valor Consulta -->
     <div class="modal-overlay" id="editValueModal">
-        <div class="modal" style="max-width: 400px;">
+        <div class="modal modal--xs">
             <div class="modal-header">
                 <h2 class="modal-title">Editar Valor</h2>
                 <button class="modal-close" onclick="closeEditValueModal()">
@@ -530,7 +495,17 @@
         </div>
     </div>
 
-    <script src="script.js"></script>
+    <script src="js/config.js"></script>
+    <script src="js/state.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/patients.js"></script>
+    <script src="js/history.js"></script>
+    <script src="js/calendar.js"></script>
+    <script src="js/appointments.js"></script>
+    <script src="js/reports.js"></script>
+    <script src="js/app.js"></script>
 </body>
 
 </html>

@@ -1,0 +1,11 @@
+RewriteEngine On
+
+# Redireciona /api/* para index.php
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^ index.php [Q,L]
+
+# Bloqueia acesso direto a arquivos sensíveis
+<FilesMatch "^(config\.php|config\.example\.php|database\.sql)$">
+    Require all denied
+</FilesMatch>

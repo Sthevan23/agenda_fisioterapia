@@ -1,0 +1,7 @@
+RewriteEngine On
+
+# API REST
+RewriteRule ^api/?(.*)$ api/index.php [QSA,L]
+
+# Página inicial
+DirectoryIndex index.html

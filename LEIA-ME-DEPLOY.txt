@@ -1,0 +1,38 @@
+========================================
+  FISIOAGENDA - COMO SUBIR NA HOSTINGER
+========================================
+
+PASSO 1 - BANCO DE DADOS
+------------------------
+1. Entre no hPanel da Hostinger
+2. Bancos de dados MySQL > Criar banco + usuario
+3. Abra phpMyAdmin
+4. Importe o arquivo: api/database.sql
+
+PASSO 2 - CONFIGURAR API
+------------------------
+1. No File Manager, abra: api/config.php
+2. Troque estes valores pelos seus do MySQL:
+
+   DB_NAME  = nome do banco (ex: u123456789_fisio)
+   DB_USER  = usuario do banco
+   DB_PASS  = senha do banco
+   CORS_ORIGIN = https://SEUDOMINIO.com
+
+PASSO 3 - ENVIAR ARQUIVOS
+-------------------------
+Envie TUDO para public_html/ na Hostinger:
+  - index.html
+  - .htaccess
+  - pasta css/
+  - pasta js/
+  - pasta api/
+
+(Ou extraia o fisioagenda-deploy.zip direto no public_html)
+
+PASSO 4 - TESTAR
+----------------
+1. https://SEUDOMINIO.com/api/health  (deve retornar JSON ok)
+2. https://SEUDOMINIO.com             (abrir o sistema)
+
+Duvidas? Leia HOSTINGER.md
