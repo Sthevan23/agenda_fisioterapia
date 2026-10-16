@@ -3,11 +3,15 @@
 
 param(
     [string]$Password = $env:HOSTINGER_FTP_PASS,
-    [string]$RemoteRoot = "/domains/fisio.sthevandev.com.br/public_html"
+    [string]$RemoteRoot = ""
 )
 
-$FtpHost = "ftp.sthevandev.com.br"
-$FtpUser = "u586160337"
+$FtpHost = if ($env:HOSTINGER_FTP_HOST) { $env:HOSTINGER_FTP_HOST } else { "ftp.sthevandev.com.br" }
+$FtpUser = $env:HOSTINGER_FTP_USER
+if (-not $FtpUser) {
+    Write-Error "Defina HOSTINGER_FTP_USER antes de rodar o deploy."
+    exit 1
+}
 
 if (-not $Password) {
     $secure = Read-Host "Senha FTP da Hostinger" -AsSecureString

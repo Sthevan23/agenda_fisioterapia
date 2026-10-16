@@ -24,7 +24,7 @@ O Git **não** envia senha. Escolha **uma** opção:
 ### Opção A — File Manager (recomendado)
 
 1. `public_html/api/` → novo arquivo **`config.local.php`**
-2. Copie o conteúdo do arquivo local `api/COLE-NO-HOSTINGER-config.local.php` (só no seu PC) e salve no servidor.
+2. Copie `config.local.example.php` → `config.local.php` e preencha `DB_PASS`.
 
 ### Opção B — Variáveis PHP no hPanel
 

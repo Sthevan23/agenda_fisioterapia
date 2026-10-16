@@ -3,9 +3,9 @@ param(
     [string]$Password = $env:HOSTINGER_FTP_PASS
 )
 
-$FtpHost = "ftp.sthevandev.com.br"
-$FtpUser = "u586160337"
-$RemoteRoot = "/domains/fisio.sthevandev.com.br/public_html"
+$FtpHost = if ($env:HOSTINGER_FTP_HOST) { $env:HOSTINGER_FTP_HOST } else { "ftp.sthevandev.com.br" }
+$FtpUser = $env:HOSTINGER_FTP_USER
+# Conta FTP aponta para public_html/fisio — caminho /api/config.local.php
 $LocalRoot = $PSScriptRoot
 $LocalFile = Join-Path $LocalRoot "api\config.local.php"
 
@@ -19,7 +19,12 @@ if (-not $Password) {
     exit 1
 }
 
-$remotePath = "$RemoteRoot/api/config.local.php"
+if (-not $FtpUser) {
+    Write-Error "Defina HOSTINGER_FTP_USER (usuario da conta FTP no hPanel)"
+    exit 1
+}
+
+$remotePath = "/api/config.local.php"
 $uri = "ftp://${FtpHost}${remotePath}"
 $request = [System.Net.FtpWebRequest]::Create($uri)
 $request.Method = [System.Net.WebRequestMethods+Ftp]::UploadFile
