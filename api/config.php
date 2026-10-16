@@ -20,12 +20,26 @@ function fisioEnv(string $key, string $default = ''): string
 $configLocal = __DIR__ . '/config.local.php';
 if (is_readable($configLocal)) {
     require $configLocal;
-    return;
 }
 
-define('DB_HOST', fisioEnv('FISIO_DB_HOST', 'localhost'));
-define('DB_NAME', fisioEnv('FISIO_DB_NAME', 'u586160337_agendathais'));
-define('DB_USER', fisioEnv('FISIO_DB_USER', 'u586160337_agendathais'));
-define('DB_PASS', fisioEnv('FISIO_DB_PASS', ''));
-define('DB_CHARSET', 'utf8mb4');
-define('CORS_ORIGIN', fisioEnv('FISIO_CORS_ORIGIN', 'https://fisio.sthevandev.com.br'));
+if (!defined('DB_HOST')) {
+    define('DB_HOST', fisioEnv('FISIO_DB_HOST', 'localhost'));
+}
+if (!defined('DB_NAME')) {
+    define('DB_NAME', fisioEnv('FISIO_DB_NAME', 'u586160337_agendathais'));
+}
+if (!defined('DB_USER')) {
+    define('DB_USER', fisioEnv('FISIO_DB_USER', 'u586160337_agendathais'));
+}
+if (!defined('DB_PASS')) {
+    define('DB_PASS', fisioEnv('FISIO_DB_PASS', ''));
+}
+if (!defined('DB_CHARSET')) {
+    define('DB_CHARSET', 'utf8mb4');
+}
+if (!defined('CORS_ORIGIN')) {
+    define('CORS_ORIGIN', fisioEnv('FISIO_CORS_ORIGIN', 'https://fisio.sthevandev.com.br'));
+}
+if (!defined('API_TOKEN')) {
+    define('API_TOKEN', fisioEnv('FISIO_API_TOKEN', ''));
+}

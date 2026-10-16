@@ -12,17 +12,20 @@ Guia passo a passo para publicar o FisioAgenda com API PHP + MySQL.
 
 ## 2. Configurar a API
 
-1. No File Manager (ou FTP), entre na pasta `api/`
-2. Copie `config.example.php` para `config.php`
-3. Edite `config.php` com os dados do MySQL:
+O arquivo `api/config.php` já vai no Git e não leva senha. No File Manager, entre em `api/` e copie `config.local.example.php` para `config.local.php`. Preencha:
 
 ```php
-define('DB_HOST', 'localhost');       // geralmente localhost na Hostinger
-define('DB_NAME', 'u123456789_fisio'); // nome do banco
-define('DB_USER', 'u123456789_user'); // usuário do banco
-define('DB_PASS', 'SuaSenhaSegura');  // senha do banco
+define('DB_HOST', 'localhost');
+define('DB_NAME', 'u123456789_fisio');
+define('DB_USER', 'u123456789_user');
+define('DB_PASS', 'SuaSenhaSegura');
 define('CORS_ORIGIN', 'https://seudominio.com');
+define('API_TOKEN', 'UmaSenhaSoSua');
 ```
+
+`API_TOKEN` é a senha que a tela da agenda pede. Sem ela, a API não entrega pacientes nem consultas.
+
+No hPanel também dá para usar as variáveis `FISIO_DB_PASS` e `FISIO_API_TOKEN`.
 
 ## 3. Enviar arquivos
 
@@ -36,7 +39,8 @@ public_html/
 ├── js/
 └── api/
     ├── index.php
-    ├── config.php      ← criado por você
+    ├── config.php
+    ├── config.local.php  ← criado por você, com DB_PASS e API_TOKEN
     ├── database.sql
     ├── .htaccess
     └── ...
@@ -56,7 +60,9 @@ Resposta esperada:
 {
   "success": true,
   "message": "FisioAgenda API online",
-  "version": "1.0.0"
+  "version": "1.0.0",
+  "connected": true,
+  "authConfigured": true
 }
 ```
 
@@ -100,13 +106,13 @@ Cadastre um paciente e agende uma consulta para confirmar que os dados estão se
 ## Problemas comuns
 
 **Erro 500 ao acessar /api/**
-→ Verifique se `config.php` existe e se os dados do banco estão corretos.
+→ Verifique se `config.local.php` existe e se `DB_PASS` está preenchida.
 
 **Página carrega mas não salva dados**
 → Abra o DevTools (F12) → aba Network e veja se as requisições para `/api/` retornam erro.
 
 **CORS bloqueado**
-→ Em `config.php`, defina `CORS_ORIGIN` com a URL exata do seu domínio.
+→ Em `config.local.php`, defina `CORS_ORIGIN` com a URL exata do seu domínio.
 
 **Subpasta (ex: seudominio.com/agenda/)**
 → Altere no `index.html`:

@@ -96,15 +96,17 @@ function renderWeekCalendar() {
 
 function renderWeekSlot(app, dateStr) {
     const p = patients.find(patient => patient.id == app.patientId);
-    const name = p ? p.name.split(' ')[0] : 'Paciente';
+    const fullName = p ? p.name : '';
+    const name = fullName ? fullName.split(' ')[0] : 'Paciente';
     const cancelled = app.status === 'cancelled';
+    const typeLabel = appointmentTypes[app.type] || app.type || '';
 
     return `
-        <div class="week-slot status-${app.status} ${cancelled ? 'cancelled-item' : ''}"
-             onclick="selectDate('${dateStr}')"
-             title="${p ? p.name : ''} — ${appointmentTypes[app.type] || app.type}">
-            <span class="week-slot-time">${app.time}</span>
-            <span class="week-slot-name">${name}</span>
+        <div class="week-slot status-${safeStatus(app.status)} ${cancelled ? 'cancelled-item' : ''}"
+             onclick="selectDate('${escapeHtml(dateStr)}')"
+             title="${escapeHtml(fullName)} — ${escapeHtml(typeLabel)}">
+            <span class="week-slot-time">${escapeHtml(app.time)}</span>
+            <span class="week-slot-name">${escapeHtml(name)}</span>
         </div>
     `;
 }
@@ -144,11 +146,6 @@ function changeMonth(delta) {
     renderCalendar();
 }
 
-function changeYear(delta) {
-    currentDate.setFullYear(currentDate.getFullYear() + delta);
-    renderCalendar();
-}
-
 function goToToday() {
     currentDate = new Date();
     weekAnchor = new Date();
@@ -185,7 +182,10 @@ function renderTodayAppointments() {
 
 function renderUpcomingAppointments() {
     const today = formatDateISO(new Date());
-    const upcoming = appointments.filter(a => a.date > today).slice(0, 5);
+    const upcoming = appointments
+        .filter(a => a.date > today && a.status !== 'cancelled')
+        .sort((a, b) => (a.date + ' ' + a.time).localeCompare(b.date + ' ' + b.time))
+        .slice(0, 5);
 
     document.getElementById('upcoming-appointments').innerHTML = upcoming.map(app =>
         renderAppointmentCard(app, 'date')
@@ -197,8 +197,9 @@ function renderAppointmentCard(app, timeMode) {
     const isCancelled = app.status === 'cancelled';
 
     const timeBlock = timeMode === 'time'
-        ? `<span class="time-start">${app.time}</span><span class="time-end">${calculateEndTime(app.time)}</span>`
-        : `<span class="time-start">${formatDate(app.date)}</span><span class="time-end">${app.time}</span>`;
+        ? `<span class="time-start">${escapeHtml(app.time)}</span><span class="time-end">${escapeHtml(calculateEndTime(app.time))}</span>`
+        : `<span class="time-start">${escapeHtml(formatDate(app.date))}</span><span class="time-end">${escapeHtml(app.time)}</span>`;
+    const id = safeId(app.id);
 
     return `
         <div class="appointment-item appointment-item--stacked ${isCancelled ? 'cancelled-item' : ''}">
@@ -206,19 +207,19 @@ function renderAppointmentCard(app, timeMode) {
                 <div class="appointment-time">${timeBlock}</div>
                 <div class="appointment-details">
                     <div class="patient-name">
-                        ${p ? p.name : 'Paciente removido'}
+                        ${p ? escapeHtml(p.name) : 'Paciente removido'}
                         ${getGenderBadge(p)}
                         ${getAgeBadge(p ? p.age : null)}
                     </div>
-                    <div class="appointment-type">${appointmentTypes[app.type]}</div>
+                    <div class="appointment-type">${escapeHtml(appointmentTypes[app.type] || app.type || '')}</div>
                 </div>
             </div>
             <div class="appointment-actions">
                 ${isCancelled ? '<span class="status-badge status-cancelled">Cancelado</span>' : (app.status === 'finished'
                     ? '<span class="status-badge status-finished">Finalizado</span>'
                     : `
-                        <button class="btn-appt btn-appt-finish" onclick="finishAppointment(${app.id})" title="Finalizar"><i class="fas fa-check"></i> Finalizar</button>
-                        <button class="btn-appt btn-appt-cancel" onclick="confirmCancelAppointment(${app.id})" title="Cancelar"><i class="fas fa-ban"></i> Cancelar</button>
+                        <button class="btn-appt btn-appt-finish" onclick="finishAppointment(${id})" title="Finalizar"><i class="fas fa-check"></i> Finalizar</button>
+                        <button class="btn-appt btn-appt-cancel" onclick="confirmCancelAppointment(${id})" title="Cancelar"><i class="fas fa-ban"></i> Cancelar</button>
                     `)}
             </div>
         </div>

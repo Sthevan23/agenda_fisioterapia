@@ -75,6 +75,7 @@ function createAppointment(PDO $pdo, array $body): void
     $observations = trim($body['observations'] ?? '') ?: null;
 
     validateAppointmentInput($pdo, $patientId, $date, $time, $type, $value, $category, $payment, $status);
+    assertSlotFree($pdo, $date, $time, $status, null);
 
     $stmt = $pdo->prepare(
         'INSERT INTO appointments
@@ -119,6 +120,7 @@ function updateAppointment(PDO $pdo, int $id, array $body): void
         : $current['observations'];
 
     validateAppointmentInput($pdo, $patientId, $date, $time, $type, $value, $category, $payment, $status);
+    assertSlotFree($pdo, $date, $time, $status, $id);
 
     $stmt = $pdo->prepare(
         'UPDATE appointments SET
@@ -191,5 +193,32 @@ function validateAppointmentInput(
 
     if (!in_array($status, ['confirmed', 'finished', 'cancelled'], true)) {
         jsonError('Status inválido', 422);
+    }
+}
+
+function assertSlotFree(PDO $pdo, string $date, string $time, string $status, ?int $ignoreId): void
+{
+    if ($status === 'cancelled') {
+        return;
+    }
+
+    $clock = substr($time, 0, 5);
+    $sql = "SELECT id FROM appointments
+            WHERE appointment_date = ?
+              AND TIME_FORMAT(appointment_time, '%H:%i') = ?
+              AND status <> 'cancelled'";
+    $params = [$date, $clock];
+
+    if ($ignoreId !== null) {
+        $sql .= ' AND id <> ?';
+        $params[] = $ignoreId;
+    }
+
+    $sql .= ' LIMIT 1';
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute($params);
+
+    if ($stmt->fetch()) {
+        jsonError('Já existe uma consulta neste horário.', 409);
     }
 }

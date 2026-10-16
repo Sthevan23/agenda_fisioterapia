@@ -13,6 +13,7 @@ function openModal(initialDate = null) {
     } else {
         selectedAppointmentDates = [];
         appointmentTimeByDate = {};
+        activeAppointmentDate = null;
         modalPickerMonth = new Date();
     }
 
@@ -29,6 +30,7 @@ function closeModal() {
     document.getElementById('appointmentForm').reset();
     selectedAppointmentDates = [];
     appointmentTimeByDate = {};
+    activeAppointmentDate = null;
 
     const searchInput = document.getElementById('patient-select-search');
     if (searchInput) {
@@ -76,12 +78,39 @@ function addAppointmentDate(dateStr, showDuplicateToast = true) {
 function removeAppointmentDate(dateStr) {
     selectedAppointmentDates = selectedAppointmentDates.filter(d => d !== dateStr);
     delete appointmentTimeByDate[dateStr];
+    if (activeAppointmentDate === dateStr) {
+        activeAppointmentDate = null;
+    }
     renderDateChips();
 }
 
 function clearAppointmentDates() {
     selectedAppointmentDates = [];
     appointmentTimeByDate = {};
+    activeAppointmentDate = null;
+    renderDateChips();
+}
+
+function syncActiveAppointmentDate() {
+    if (selectedAppointmentDates.length === 0) {
+        activeAppointmentDate = null;
+        return;
+    }
+
+    if (selectedAppointmentDates.length === 1) {
+        activeAppointmentDate = selectedAppointmentDates[0];
+        return;
+    }
+
+    if (!activeAppointmentDate || !selectedAppointmentDates.includes(activeAppointmentDate)) {
+        activeAppointmentDate = selectedAppointmentDates.find(d => !appointmentTimeByDate[d])
+            || selectedAppointmentDates[0];
+    }
+}
+
+function setActiveAppointmentDate(dateStr) {
+    if (!selectedAppointmentDates.includes(dateStr)) return;
+    activeAppointmentDate = dateStr;
     renderDateChips();
 }
 
@@ -140,13 +169,12 @@ function generateTimeSlots() {
     const container = document.getElementById('timeSlots');
     if (!container) return;
 
+    syncActiveAppointmentDate();
+    const focusDate = activeAppointmentDate || selectedAppointmentDates[0];
+    const focusTime = focusDate ? appointmentTimeByDate[focusDate] : '';
+
     container.innerHTML = timeSlots.map(t => {
-        const active = selectedAppointmentDates.length === 1
-            && appointmentTimeByDate[selectedAppointmentDates[0]] === t;
-        const allSame = selectedAppointmentDates.length > 1
-            && selectedAppointmentDates.every(d => appointmentTimeByDate[d] === t)
-            && appointmentTimeByDate[selectedAppointmentDates[0]] === t;
-        const selected = active || allSame;
+        const selected = focusTime === t;
         return `<button type="button" class="time-slot ${selected ? 'selected' : ''}" onclick="selectAppointmentTime('${t}')">${t}</button>`;
     }).join('');
 
@@ -167,7 +195,8 @@ function updateTimeSlotsHint() {
         return;
     }
 
-    hint.textContent = 'Toque em um horário para aplicar a todos os dias (ou ajuste na lista abaixo).';
+    const focusDate = activeAppointmentDate || selectedAppointmentDates[0];
+    hint.textContent = `Horário para ${formatDateLabel(focusDate)} — toque no chip do dia para trocar, ou use a lista abaixo.`;
 }
 
 function selectAppointmentTime(time) {
@@ -176,22 +205,22 @@ function selectAppointmentTime(time) {
         return;
     }
 
-    selectedAppointmentDates.forEach(dateStr => {
-        appointmentTimeByDate[dateStr] = time;
-    });
+    syncActiveAppointmentDate();
+    const targetDate = activeAppointmentDate || selectedAppointmentDates[0];
+    appointmentTimeByDate[targetDate] = time;
 
-    generateTimeSlots();
-    renderDateTimeRows();
+    renderDateChips();
 }
 
 function setAppointmentTimeForDate(dateStr, time) {
     if (!dateStr) return;
+    activeAppointmentDate = dateStr;
     if (time) {
         appointmentTimeByDate[dateStr] = time;
     } else {
         delete appointmentTimeByDate[dateStr];
     }
-    generateTimeSlots();
+    renderDateChips();
 }
 
 function applyBulkTimeToAllDates() {
@@ -204,8 +233,7 @@ function applyBulkTimeToAllDates() {
     selectedAppointmentDates.forEach(dateStr => {
         appointmentTimeByDate[dateStr] = time;
     });
-    renderDateTimeRows();
-    generateTimeSlots();
+    renderDateChips();
     showToast('Horário aplicado a todos os dias.');
 }
 
@@ -330,6 +358,8 @@ function renderDateChips() {
 
     if (!container) return;
 
+    syncActiveAppointmentDate();
+
     const countEl = document.getElementById('selected-dates-count');
     const count = selectedAppointmentDates.length;
 
@@ -352,10 +382,19 @@ function renderDateChips() {
 
     container.innerHTML = selectedAppointmentDates.map(dateStr => {
         const label = formatDateLabel(dateStr);
+        const time = appointmentTimeByDate[dateStr];
+        const isActive = count > 1 && dateStr === activeAppointmentDate;
+        const timeSuffix = time ? `<span class="date-chip-time">${escapeHtml(time)}</span>` : '';
         return `
-            <span class="date-chip">
-                <i class="fas fa-calendar-day"></i> ${label}
-                <button type="button" class="date-chip-remove" onclick="removeAppointmentDate('${dateStr}')" aria-label="Remover data">
+            <span class="date-chip ${isActive ? 'date-chip--active' : ''} ${time ? 'date-chip--has-time' : ''}"
+                role="button"
+                tabindex="0"
+                onclick="setActiveAppointmentDate('${dateStr}')"
+                onkeydown="if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); setActiveAppointmentDate('${dateStr}'); }">
+                <i class="fas fa-calendar-day"></i>
+                <span class="date-chip-text">${escapeHtml(label)}</span>
+                ${timeSuffix}
+                <button type="button" class="date-chip-remove" onclick="event.stopPropagation(); removeAppointmentDate('${dateStr}')" aria-label="Remover data">
                     <i class="fas fa-times"></i>
                 </button>
             </span>
@@ -420,9 +459,15 @@ async function saveAppointment() {
     const patient = patients.find(p => p.id == patientId);
     let successCount = 0;
     let failCount = 0;
+    let lastFailMessage = '';
 
     for (const date of dates) {
         const time = appointmentTimeByDate[date];
+        if (findSlotConflict(date, time)) {
+            failCount++;
+            lastFailMessage = `Já existe uma consulta em ${formatDateLabel(date)} às ${time}.`;
+            continue;
+        }
         try {
             if (useApiMode) {
                 const created = await api.createAppointment({ ...payloadBase, date, time });
@@ -438,8 +483,9 @@ async function saveAppointment() {
                 });
             }
             successCount++;
-        } catch {
+        } catch (error) {
             failCount++;
+            lastFailMessage = error.message || lastFailMessage;
         }
     }
 
@@ -456,7 +502,7 @@ async function saveAppointment() {
         const suffix = useApiMode ? '' : ' (salvo neste navegador)';
         showToast((successCount === 1 ? 'Consulta agendada!' : `${successCount} consultas agendadas!`) + suffix);
     } else if (successCount === 0) {
-        showToast('Não foi possível agendar. Verifique a pasta api/ no servidor.', 'error');
+        showToast(lastFailMessage || 'Não foi possível agendar. Verifique a pasta api/ no servidor.', 'error');
     } else {
         showToast(`${successCount} agendada(s), ${failCount} falhou(ram).`, 'error');
     }
@@ -612,6 +658,15 @@ async function executeCancelAppointment() {
     }
 
     closeCancelModal();
+}
+
+function findSlotConflict(date, time, ignoreId = null) {
+    return appointments.find(item =>
+        item.date === date &&
+        item.time === time &&
+        item.status !== 'cancelled' &&
+        item.id !== ignoreId
+    );
 }
 
 function replaceAppointment(updated) {

@@ -15,7 +15,7 @@ O repositório está pronto para **Advanced → Git → Connect with GitHub**. C
 ## 2. Banco MySQL (uma vez)
 
 1. phpMyAdmin → banco `u586160337_agendathais`
-2. Importe `mysql-import-u586160337_agendathais.sql` (ou `api/database.sql`)
+2. Importe `api/database.sql`
 
 ## 3. Senha da API (obrigatório após deploy)
 
@@ -24,13 +24,14 @@ O Git **não** envia senha. Escolha **uma** opção:
 ### Opção A — File Manager (recomendado)
 
 1. `public_html/api/` → novo arquivo **`config.local.php`**
-2. Copie `config.local.example.php` → `config.local.php` e preencha `DB_PASS`.
+2. Copie `config.local.example.php` → `config.local.php` e preencha `DB_PASS` e `API_TOKEN`.
 
 ### Opção B — Variáveis PHP no hPanel
 
 **Advanced → PHP Configuration → PHP Variables**, adicione:
 
 - `FISIO_DB_PASS` = senha do MySQL
+- `FISIO_API_TOKEN` = senha que a tela da agenda pede
 - (opcional) `FISIO_DB_NAME`, `FISIO_DB_USER`, `FISIO_CORS_ORIGIN`
 
 Sem isso, `/api/index.php?route=health` responde erro de banco.
@@ -59,7 +60,6 @@ public_html/
 ├── api.php
 ├── css/
 ├── js/
-├── styles.css/index.css   → importa css/global.css
 └── api/
     ├── index.php
     ├── config.php

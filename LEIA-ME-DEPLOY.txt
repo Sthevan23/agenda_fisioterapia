@@ -11,28 +11,27 @@ PASSO 1 - BANCO DE DADOS
 
 PASSO 2 - CONFIGURAR API
 ------------------------
-1. No File Manager, abra: api/config.php
-2. Troque estes valores pelos seus do MySQL:
+1. Nao edite api/config.php (ele vem do Git, sem senha)
+2. Copie api/config.local.example.php para api/config.local.php
+3. Preencha:
 
-   DB_NAME  = nome do banco (ex: u123456789_fisio)
-   DB_USER  = usuario do banco
-   DB_PASS  = senha do banco
-   CORS_ORIGIN = https://SEUDOMINIO.com
+   DB_PASS   = senha do MySQL
+   API_TOKEN = senha que a tela da agenda vai pedir
 
 PASSO 3 - ENVIAR ARQUIVOS
 -------------------------
-Subdominio fisio: envie TUDO para
+Com Git, siga HOSTINGER-GIT.md.
+
+Subdominio fisio, se for FTP: envie para
   domains/fisio.sthevandev.com.br/public_html/
-(dominio principal usa public_html/ na raiz)
 
 Arquivos:
   - index.html
   - .htaccess
+  - api.php
   - pasta css/
   - pasta js/
   - pasta api/
-
-(Ou extraia o fisioagenda-deploy.zip direto no public_html)
 
 PASSO 4 - TESTAR
 ----------------

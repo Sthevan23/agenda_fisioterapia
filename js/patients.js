@@ -17,7 +17,8 @@ function openPatientModal(editId = null) {
             document.getElementById('patientAge').value = patient.age || '';
             document.getElementById('editPatientId').value = patient.id;
 
-            const genderRadio = document.querySelector(`input[name="gender"][value="${patient.gender || 'masculino'}"]`);
+            const gender = getPatientGender(patient) || 'masculino';
+            const genderRadio = document.querySelector(`input[name="gender"][value="${gender}"]`);
             if (genderRadio) genderRadio.checked = true;
 
             updateAgePreview(patient.age);
@@ -150,14 +151,11 @@ function renderPatientList(search = '') {
     }
 
     container.innerHTML = filtered.map(p => {
-        let gender = p.gender;
-        if (!gender) {
-            const name = p.name.toLowerCase().trim();
-            gender = name.endsWith('a') ? 'feminino' : 'masculino';
-        }
-        const isMale = gender === 'masculino';
-        const avatarClass = isMale ? 'patient-avatar--male' : 'patient-avatar--female';
-        const iconClass = isMale ? 'fa-mars' : 'fa-venus';
+        const gender = getPatientGender(p);
+        const avatarClass = gender === 'masculino' ? 'patient-avatar--male' : (gender === 'feminino' ? 'patient-avatar--female' : '');
+        const iconClass = gender === 'masculino' ? 'fa-mars' : (gender === 'feminino' ? 'fa-venus' : 'fa-user');
+        const id = safeId(p.id);
+        const age = Number(p.age);
 
         return `
         <div class="patient-item">
@@ -165,16 +163,16 @@ function renderPatientList(search = '') {
                 <i class="fas ${iconClass}"></i>
             </div>
             <div class="patient-main">
-                <span class="patient-name-text" title="${p.name}">${p.name}</span>
-                ${p.age ? `<span class="patient-age-inline">${p.age} anos</span>` : ''}
+                <span class="patient-name-text" title="${escapeHtml(p.name)}">${escapeHtml(p.name)}</span>
+                ${Number.isFinite(age) && age > 0 ? `<span class="patient-age-inline">${age} anos</span>` : ''}
                 <span class="patient-meta-dot" aria-hidden="true">·</span>
-                <span class="patient-phone-text">${p.phone}</span>
+                <span class="patient-phone-text">${escapeHtml(p.phone)}</span>
             </div>
             <div class="patient-actions patient-actions--compact">
-                <button type="button" class="btn btn-secondary btn-icon" onclick="openPatientModal(${p.id})" title="Editar">
+                <button type="button" class="btn btn-secondary btn-icon" onclick="openPatientModal(${id})" title="Editar">
                     <i class="fas fa-edit"></i>
                 </button>
-                <button type="button" class="btn btn-danger-outline btn-icon" onclick="deletePatient(${p.id})" title="Excluir">
+                <button type="button" class="btn btn-danger-outline btn-icon" onclick="deletePatient(${id})" title="Excluir">
                     <i class="fas fa-trash"></i>
                 </button>
             </div>
@@ -191,5 +189,5 @@ function renderPatientSelect(search = '') {
         .sort((a, b) => a.name.localeCompare(b.name));
 
     select.innerHTML = '<option value="">Selecione um paciente</option>' +
-        filtered.map(p => `<option value="${p.id}">${p.name} - ${p.phone}</option>`).join('');
+        filtered.map(p => `<option value="${safeId(p.id)}">${escapeHtml(p.name)} - ${escapeHtml(p.phone)}</option>`).join('');
 }

@@ -1,5 +1,6 @@
 let API_BASE = '/api';
 let useApiMode = false;
+let apiToken = '';
 
 function getApiCandidates() {
     const meta = document.querySelector('meta[name="api-base"]');
@@ -11,6 +12,13 @@ function getApiCandidates() {
         '/api',
         '/api.php',
     ].filter((value, index, list) => list.indexOf(value) === index);
+}
+
+function authHeaders(json = false) {
+    const headers = { Accept: 'application/json' };
+    if (json) headers['Content-Type'] = 'application/json';
+    if (apiToken) headers['X-Api-Token'] = apiToken;
+    return headers;
 }
 
 async function probeApiBase(base) {
@@ -26,7 +34,8 @@ async function probeApiBase(base) {
             if (response.ok && payload.success) {
                 return { base, url, payload };
             }
-            if (payload?.error?.includes('using password: NO')) {
+            const errorText = payload?.error || '';
+            if (errorText.includes('DB_PASS') || errorText.includes('Senha do MySQL') || errorText.includes('using password: NO')) {
                 return { base, url, payload, needsConfigLocal: true };
             }
         } catch {
@@ -37,9 +46,9 @@ async function probeApiBase(base) {
     return null;
 }
 
-async function initApiConnection() {
+async function prepareApiSession() {
+    apiToken = sessionStorage.getItem('fisio_api_token') || '';
     const candidates = getApiCandidates();
-
     let needsConfigLocal = false;
 
     for (const base of candidates) {
@@ -48,18 +57,37 @@ async function initApiConnection() {
             needsConfigLocal = true;
             continue;
         }
-        if (result) {
-            API_BASE = result.base;
-            useApiMode = true;
-            setApiBanner(false, result.payload);
-            return true;
+        if (!result) continue;
+
+        API_BASE = result.base;
+        useApiMode = true;
+
+        if (result.payload.authConfigured === false) {
+            useApiMode = false;
+            return 'unconfigured';
         }
+
+        if (apiToken && await verifyApiToken()) {
+            setApiBanner(false);
+            return 'ready';
+        }
+
+        apiToken = '';
+        return 'login';
     }
 
     useApiMode = false;
-    loadFromLocalStorage();
-    setApiBanner(true, null, needsConfigLocal);
-    return false;
+    setApiBanner(true, needsConfigLocal);
+    return 'offline';
+}
+
+async function verifyApiToken() {
+    try {
+        await apiRequest('GET', '/auth');
+        return true;
+    } catch {
+        return false;
+    }
 }
 
 function loadFromLocalStorage() {
@@ -72,20 +100,30 @@ function saveLocalStorage() {
     localStorage.setItem('fisio_appointments', JSON.stringify(appointments));
 }
 
-function setApiBanner(offline, healthPayload = null, needsConfigLocal = false) {
+function setApiBanner(offline, needsConfigLocal = false, needsAuthSetup = false) {
     const banner = document.getElementById('api-offline-banner');
     if (!banner) return;
 
-    if (offline) {
+    if (offline || needsAuthSetup) {
         banner.classList.remove('hidden');
-        if (needsConfigLocal) {
+        if (needsAuthSetup) {
+            banner.innerHTML = `
+                <i class="fas fa-triangle-exclamation"></i>
+                <span>
+                    <strong>A agenda ainda não tem senha de acesso.</strong>
+                    No servidor, em <code>api/config.local.php</code>, defina
+                    <code>API_TOKEN</code> (ou a variável <code>FISIO_API_TOKEN</code>).
+                    Até lá, os cadastros ficam só neste aparelho.
+                </span>
+            `;
+        } else if (needsConfigLocal) {
             banner.innerHTML = `
                 <i class="fas fa-triangle-exclamation"></i>
                 <span>
                     <strong>Falta a senha do MySQL no servidor.</strong>
                     No Hostinger (File Manager), em <code>api/</code>, copie
                     <code>config.local.example.php</code> para <code>config.local.php</code>
-                    e preencha <code>DB_PASS</code>. Depois teste
+                    e preencha <code>DB_PASS</code> e <code>API_TOKEN</code>. Depois teste
                     <a href="/api/index.php?route=health" target="_blank" rel="noopener">a API</a>.
                 </span>
             `;
@@ -119,7 +157,7 @@ async function apiRequest(method, path, body = null) {
     for (const url of paths) {
         const options = {
             method,
-            headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+            headers: authHeaders(body !== null),
         };
 
         if (body !== null) {
@@ -151,8 +189,6 @@ async function apiRequest(method, path, body = null) {
 }
 
 const api = {
-    health: () => apiRequest('GET', '/health'),
-
     getPatients: () => apiRequest('GET', '/patients'),
     createPatient: (data) => apiRequest('POST', '/patients', data),
     updatePatient: (id, data) => apiRequest('PUT', `/patients/${id}`, data),
@@ -165,10 +201,7 @@ const api = {
 };
 
 async function loadAllData() {
-    const connected = await initApiConnection();
-    if (!connected) {
-        return;
-    }
+    if (!useApiMode) return;
 
     const [patientsData, appointmentsData] = await Promise.all([
         api.getPatients(),
@@ -189,6 +222,7 @@ function refreshAllViews() {
     renderPatientSelect();
     renderHistory();
     updateStats();
+    updateLogoutButton();
 
     const reportsSection = document.getElementById('reports-section');
     if (reportsSection && !reportsSection.classList.contains('hidden')) {

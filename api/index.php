@@ -42,7 +42,7 @@ if ($originAllowed) {
 }
 
 header('Access-Control-Allow-Methods: GET, POST, PUT, PATCH, DELETE, OPTIONS');
-header('Access-Control-Allow-Headers: Content-Type, Authorization');
+header('Access-Control-Allow-Headers: Content-Type, Authorization, X-Api-Token');
 
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     http_response_code(204);
@@ -78,6 +78,15 @@ $method = $_SERVER['REQUEST_METHOD'];
 $body = readJsonBody();
 
 try {
+    if ($resource === 'auth') {
+        requireApiAuth();
+        jsonResponse(['success' => true]);
+    }
+
+    if ($resource !== '' && $resource !== 'health') {
+        requireApiAuth();
+    }
+
     $pdo = getDB();
 
     if ($resource === '' || $resource === 'health') {
@@ -86,8 +95,8 @@ try {
             'success' => true,
             'message' => 'FisioAgenda API online',
             'version' => '1.0.0',
-            'database' => DB_NAME,
             'connected' => true,
+            'authConfigured' => API_TOKEN !== '',
         ]);
     }
 
@@ -101,7 +110,28 @@ try {
 
     jsonError('Rota não encontrada', 404);
 } catch (PDOException $e) {
-    jsonError('Erro de banco de dados: ' . $e->getMessage(), 500);
+    error_log('FisioAgenda DB: ' . $e->getMessage());
+    jsonError('Erro de banco de dados', 500);
 } catch (Throwable $e) {
-    jsonError('Erro interno: ' . $e->getMessage(), 500);
+    error_log('FisioAgenda: ' . $e->getMessage());
+    jsonError('Erro interno', 500);
+}
+
+function requireApiAuth(): void
+{
+    if (API_TOKEN === '') {
+        jsonError('Defina API_TOKEN em api/config.local.php ou FISIO_API_TOKEN no painel da hospedagem.', 503);
+    }
+
+    $provided = trim((string) ($_SERVER['HTTP_X_API_TOKEN'] ?? ''));
+    if ($provided === '') {
+        $authorization = (string) ($_SERVER['HTTP_AUTHORIZATION'] ?? $_SERVER['REDIRECT_HTTP_AUTHORIZATION'] ?? '');
+        if (preg_match('/Bearer\s+(\S+)/i', $authorization, $matches) === 1) {
+            $provided = $matches[1];
+        }
+    }
+
+    if ($provided === '' || !hash_equals(API_TOKEN, $provided)) {
+        jsonError('Senha de acesso inválida', 401);
+    }
 }

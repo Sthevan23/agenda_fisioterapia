@@ -8,6 +8,10 @@ function getDB(): PDO
         return $pdo;
     }
 
+    if (DB_PASS === '') {
+        jsonError('Senha do MySQL vazia. Preencha DB_PASS em config.local.php ou FISIO_DB_PASS.', 500);
+    }
+
     $dsn = sprintf(
         'mysql:host=%s;dbname=%s;charset=%s',
         DB_HOST,

@@ -6,6 +6,6 @@ RewriteCond %{REQUEST_FILENAME} !-d
 RewriteRule ^ index.php [Q,L]
 
 # Bloqueia acesso direto a arquivos sensíveis
-<FilesMatch "^(config\.php|config\.local\.php|config\.example\.php|config\.local\.example\.php|database\.sql)$">
+<FilesMatch "^(config\.php|config\.local\.php|config\.local\.example\.php|database\.sql)$">
     Require all denied
 </FilesMatch>

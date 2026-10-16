@@ -3,33 +3,39 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <meta name="api-base" content="/api">
     <title>FisioAgenda - Gestão de Consultas</title>
+
+    <script>
+        (function () {
+            var stored = localStorage.getItem('fisio_theme');
+            var theme = stored === 'dark' || stored === 'light'
+                ? stored
+                : (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+            document.documentElement.setAttribute('data-theme', theme);
+        })();
+    </script>
 
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
-    <link rel="stylesheet" href="styles.css/index.css?v=20251016b">
-    <link rel="stylesheet" href="css/main.css?v=20251016b">
-    <style>
-        /* Mobile: evita corte lateral até o CSS externo atualizar no servidor */
-        @media (max-width: 768px) {
-            html, body { overflow-x: hidden; width: 100%; max-width: 100%; }
-            .app-container { display: block !important; width: 100% !important; max-width: 100vw !important; overflow-x: hidden !important; }
-            .main-content { width: 100% !important; max-width: 100% !important; margin-left: 0 !important; box-sizing: border-box !important; }
-            .header { flex-direction: column !important; align-items: stretch !important; width: 100% !important; }
-            .header-actions.view-toggle { display: grid !important; grid-template-columns: 1fr 1fr !important; width: 100% !important; gap: 0.65rem !important; }
-            .header-actions.view-toggle .btn-primary { grid-column: 1 / -1 !important; width: 100% !important; min-height: 52px !important; justify-content: center !important; }
-            .header-actions.view-toggle .btn-secondary { width: 100% !important; min-height: 52px !important; justify-content: center !important; }
-            .stats-grid, .content-grid, .stat-card, .calendar-container { width: 100% !important; max-width: 100% !important; box-sizing: border-box !important; }
-            .content-grid { grid-template-columns: 1fr !important; }
-            .page-title h1 { font-size: 1.45rem !important; line-height: 1.25 !important; }
-        }
-    </style>
+    <link rel="stylesheet" href="css/global.css?v=20251016e">
 </head>
 
 <body>
+    <button type="button" class="theme-fab" id="btn-theme-fab" onclick="toggleTheme()" title="Alternar tema claro/escuro" aria-label="Alternar tema">
+        <i class="fas fa-moon" id="theme-icon-fab" aria-hidden="true"></i>
+    </button>
+    <div id="auth-gate" class="auth-gate hidden">
+        <form id="auth-form" class="auth-card">
+            <h2>Acesso da agenda</h2>
+            <p>Digite a senha definida em <code>API_TOKEN</code> no servidor.</p>
+            <label class="form-label" for="auth-password">Senha</label>
+            <input type="password" class="form-input" id="auth-password" autocomplete="current-password" required>
+            <button type="submit" class="btn btn-primary">Entrar</button>
+        </form>
+    </div>
     <div id="api-offline-banner" class="api-offline-banner hidden" role="alert"></div>
     <button class="menu-toggle" onclick="toggleSidebar()">
         <i class="fas fa-bars"></i>
@@ -70,22 +76,24 @@
                             <span>Relatórios</span>
                         </a>
                     </li>
-                    <li class="nav-item">
-                        <a class="nav-link" data-section="settings" onclick="showSection('settings')">
-                            <i class="fas fa-cog"></i>
-                            <span>Configurações</span>
-                        </a>
-                    </li>
                 </ul>
             </nav>
 
-            <div class="user-profile">
-                <div class="user-avatar"><i class="fas fa-user-md" aria-hidden="true"></i></div>
-                <div class="user-info">
-                    <div class="user-name">Profissional</div>
-                    <div class="user-role">Fisioterapeuta</div>
+            <div class="sidebar-footer">
+                <button type="button" class="theme-toggle" id="btn-theme" onclick="toggleTheme()" aria-label="Alternar tema claro e escuro">
+                    <i class="fas fa-moon" id="theme-icon" aria-hidden="true"></i>
+                    <span id="theme-label">Tema escuro</span>
+                </button>
+                <div class="user-profile">
+                    <div class="user-avatar"><i class="fas fa-user-md" aria-hidden="true"></i></div>
+                    <div class="user-info">
+                        <div class="user-name">Profissional</div>
+                        <div class="user-role">Fisioterapeuta</div>
+                    </div>
+                    <button type="button" class="user-logout hidden" id="btn-logout" onclick="logoutApi()" title="Sair">
+                        <i class="fas fa-sign-out-alt" aria-hidden="true"></i>
+                    </button>
                 </div>
-                <i class="fas fa-sign-out-alt user-logout"></i>
             </div>
         </aside>
 
@@ -115,7 +123,6 @@
                     <div class="stat-card">
                         <div class="stat-header">
                             <div class="stat-icon blue"><i class="fas fa-calendar-day"></i></div>
-                            <span class="stat-change positive">+12%</span>
                         </div>
                         <div class="stat-value" id="today-count">0</div>
                         <div class="stat-label">Consultas Hoje</div>
@@ -123,7 +130,6 @@
                     <div class="stat-card">
                         <div class="stat-header">
                             <div class="stat-icon orange"><i class="fas fa-clock"></i></div>
-                            <span class="stat-change positive">+5%</span>
                         </div>
                         <div class="stat-value" id="week-count">0</div>
                         <div class="stat-label">Esta Semana</div>
@@ -131,7 +137,6 @@
                     <div class="stat-card">
                         <div class="stat-header">
                             <div class="stat-icon green"><i class="fas fa-check-circle"></i></div>
-                            <span class="stat-change positive">+8%</span>
                         </div>
                         <div class="stat-value" id="confirmed-count">0</div>
                         <div class="stat-label">Confirmadas</div>
@@ -139,7 +144,6 @@
                     <div class="stat-card">
                         <div class="stat-header">
                             <div class="stat-icon red"><i class="fas fa-exclamation-circle"></i></div>
-                            <span class="stat-change negative">-2%</span>
                         </div>
                         <div class="stat-value" id="cancelled-count">0</div>
                         <div class="stat-label">Canceladas</div>
@@ -215,8 +219,9 @@
                     </div>
                     <div class="filter-group">
                         <button class="filter-btn active" onclick="filterHistory('all')" id="filter-all">Todos</button>
-                        <button class="filter-btn" onclick="filterHistory('confirmed')" id="filter-confirmed">✅ Confirmados</button>
-                        <button class="filter-btn" onclick="filterHistory('cancelled')" id="filter-cancelled">🚫 Cancelados</button>
+                        <button class="filter-btn" onclick="filterHistory('confirmed')" id="filter-confirmed">Confirmados</button>
+                        <button class="filter-btn" onclick="filterHistory('finished')" id="filter-finished">Finalizados</button>
+                        <button class="filter-btn" onclick="filterHistory('cancelled')" id="filter-cancelled">Cancelados</button>
                     </div>
                     <div id="history-list" class="history-list"></div>
                 </div>
@@ -335,7 +340,7 @@
                     </div>
                     <div class="form-group" id="appointment-times-panel">
                         <label class="form-label">Horários</label>
-                        <p class="form-hint" id="time-slots-hint">Selecione os dias acima, depois toque no horário (ou escolha por dia na lista).</p>
+                        <p class="form-hint" id="time-slots-hint">Selecione os dias acima. Com vários dias, toque no chip do dia e escolha o horário (ou use a lista abaixo).</p>
                         <div class="time-slots" id="timeSlots"></div>
                         <div class="date-times-section hidden" id="date-times-section">
                             <div class="date-times-header">

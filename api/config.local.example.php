@@ -11,3 +11,6 @@ define('DB_PASS', 'COLOQUE_A_SENHA_DO_MYSQL_AQUI');
 define('DB_CHARSET', 'utf8mb4');
 
 define('CORS_ORIGIN', 'https://fisio.sthevandev.com.br');
+
+// Senha que a tela pede para abrir a agenda. Troque por uma frase só sua.
+define('API_TOKEN', 'COLOQUE_UMA_SENHA_DE_ACESSO');

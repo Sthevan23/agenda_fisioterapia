@@ -8,4 +8,5 @@ let patients = [];
 let appointments = [];
 let selectedAppointmentDates = [];
 let appointmentTimeByDate = {};
+let activeAppointmentDate = null;
 let modalPickerMonth = new Date();

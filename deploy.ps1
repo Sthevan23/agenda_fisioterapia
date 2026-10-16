@@ -57,13 +57,6 @@ function Ensure-FtpDir($RemoteDir) {
 Write-Host "Deploy FisioAgenda -> $FtpHost$RemoteRoot"
 Write-Host ""
 
-$stylesDir = Join-Path $LocalRoot "styles.css"
-if (-not (Test-Path $stylesDir)) {
-    New-Item -ItemType Directory -Path $stylesDir | Out-Null
-}
-"@import url('../css/global.css');" | Set-Content (Join-Path $stylesDir "index.css") -Encoding UTF8
-Write-Host ""
-
 $configRel = "api\config.local.php"
 if (-not (Test-Path (Join-Path $LocalRoot $configRel))) {
     Write-Host "AVISO: api\config.local.php nao encontrado - crie no servidor apos deploy Git."
@@ -73,7 +66,6 @@ if (-not (Test-Path (Join-Path $LocalRoot $configRel))) {
 $dirs = @(
     "$RemoteRoot/css",
     "$RemoteRoot/js",
-    "$RemoteRoot/styles.css",
     "$RemoteRoot/api",
     "$RemoteRoot/api/lib",
     "$RemoteRoot/api/routes"
@@ -84,9 +76,7 @@ $files = @(
     @("index.html", "$RemoteRoot/index.html"),
     @(".htaccess", "$RemoteRoot/.htaccess"),
     @("api.php", "$RemoteRoot/api.php"),
-    @("css\main.css", "$RemoteRoot/css/main.css"),
     @("css\global.css", "$RemoteRoot/css/global.css"),
-    @("styles.css\index.css", "$RemoteRoot/styles.css/index.css"),
     @("api\index.php", "$RemoteRoot/api/index.php"),
     @("api\config.php", "$RemoteRoot/api/config.php"),
     @("api\config.local.example.php", "$RemoteRoot/api/config.local.example.php"),

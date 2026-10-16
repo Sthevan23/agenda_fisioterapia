@@ -1,3 +1,21 @@
+function escapeHtml(value) {
+    return String(value ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
+function safeId(id) {
+    const number = Number(id);
+    return Number.isInteger(number) && number > 0 ? String(number) : '0';
+}
+
+function safeStatus(status) {
+    return status === 'finished' || status === 'cancelled' ? status : 'confirmed';
+}
+
 function getAgeCategory(age) {
     if (age === null || age === undefined || age === '') return null;
     const n = Number(age);
@@ -13,13 +31,15 @@ function getAgeBadge(age) {
     return `<span class="age-badge ${cat.class} age-badge--inline">${cat.label}</span>`;
 }
 
+function getPatientGender(patient) {
+    if (!patient) return null;
+    if (patient.gender === 'masculino' || patient.gender === 'feminino') return patient.gender;
+    return null;
+}
+
 function getGenderBadge(patient) {
-    if (!patient) return '';
-    let gender = patient.gender;
-    if (!gender) {
-        const name = patient.name.toLowerCase().trim();
-        gender = name.endsWith('a') ? 'feminino' : 'masculino';
-    }
+    const gender = getPatientGender(patient);
+    if (!gender) return '';
     const isMale = gender === 'masculino';
     const color = isMale ? '#3498db' : '#ff6b81';
     const icon = isMale ? 'fa-mars' : 'fa-venus';

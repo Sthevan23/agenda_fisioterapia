@@ -1,7 +1,7 @@
 function filterHistory(status) {
     activeHistoryFilter = status;
 
-    ['all', 'confirmed', 'cancelled'].forEach(s => {
+    ['all', 'confirmed', 'finished', 'cancelled'].forEach(s => {
         const btn = document.getElementById('filter-' + s);
         if (!btn) return;
         btn.classList.toggle('active', s === status);
@@ -42,41 +42,44 @@ function renderHistory(search = '', statusFilter = 'all') {
         : filtered.map(app => {
             const patient = patients.find(p => p.id == app.patientId);
             const isCancelled = app.status === 'cancelled';
+            const status = safeStatus(app.status);
+            const id = safeId(app.id);
+            const paymentLabel = app.payment ? (paymentMethods[app.payment] || app.payment) : '';
             return `
-                <div class="appointment-item appointment-item--stacked ${isCancelled ? 'cancelled-item' : ''}" data-status="${app.status}">
+                <div class="appointment-item appointment-item--stacked ${isCancelled ? 'cancelled-item' : ''}" data-status="${status}">
                     <div class="appointment-item__row">
                         <div class="appointment-time">
-                            <span class="time-start">${formatDate(app.date)}</span>
-                            <span class="time-end">${app.time}</span>
+                            <span class="time-start">${escapeHtml(formatDate(app.date))}</span>
+                            <span class="time-end">${escapeHtml(app.time)}</span>
                         </div>
                         <div class="appointment-details">
                             <div class="patient-name">
-                                ${patient ? patient.name : 'Paciente removido'}
+                                ${patient ? escapeHtml(patient.name) : 'Paciente removido'}
                                 ${getGenderBadge(patient)}
                                 ${getAgeBadge(patient ? patient.age : null)}
                             </div>
                             <div class="appointment-type">
-                                ${appointmentTypes[app.type] || app.type}
-                                ${app.payment ? `<small class="payment-tag">${paymentMethods[app.payment] || app.payment}</small>` : ''}
+                                ${escapeHtml(appointmentTypes[app.type] || app.type || '')}
+                                ${paymentLabel ? `<small class="payment-tag">${escapeHtml(paymentLabel)}</small>` : ''}
                                 ${app.value ? `- <span class="appointment-value">${formatCurrency(app.value)}</span>` : ''}
                             </div>
                         </div>
                     </div>
                     <div class="appointment-actions">
-                        <span class="status-badge status-${app.status} status-badge--inline">
+                        <span class="status-badge status-${status} status-badge--inline">
                             ${isCancelled ? 'Cancelado' : (app.status === 'finished' ? 'Finalizado' : 'Confirmado')}
                         </span>
                         ${(!isCancelled && app.status !== 'finished') ? `
-                            <button class="btn-appt btn-appt-finish" onclick="finishAppointment(${app.id})" title="Finalizar"><i class="fas fa-check"></i> Finalizar</button>
-                            <button class="btn-appt btn-appt-cancel" onclick="confirmCancelAppointment(${app.id})" title="Cancelar"><i class="fas fa-ban"></i> Cancelar</button>
+                            <button class="btn-appt btn-appt-finish" onclick="finishAppointment(${id})" title="Finalizar"><i class="fas fa-check"></i> Finalizar</button>
+                            <button class="btn-appt btn-appt-cancel" onclick="confirmCancelAppointment(${id})" title="Cancelar"><i class="fas fa-ban"></i> Cancelar</button>
                         ` : ''}
                         ${app.status === 'finished' ? `
-                            <button class="btn-appt btn-appt-edit" onclick="openEditValueModal(${app.id})" title="Editar Valor"><i class="fas fa-edit"></i> Valor</button>
-                            <button class="btn-appt btn-appt-revert" onclick="revertBilling(${app.id})" title="Reverter Faturamento"><i class="fas fa-undo"></i> Estornar</button>
-                            <button class="btn-appt btn-appt-cancel btn-appt-icon" onclick="deleteAppointment(${app.id})" title="Excluir"><i class="fas fa-trash"></i></button>
+                            <button class="btn-appt btn-appt-edit" onclick="openEditValueModal(${id})" title="Editar Valor"><i class="fas fa-edit"></i> Valor</button>
+                            <button class="btn-appt btn-appt-revert" onclick="revertBilling(${id})" title="Reverter Faturamento"><i class="fas fa-undo"></i> Estornar</button>
+                            <button class="btn-appt btn-appt-cancel btn-appt-icon" onclick="deleteAppointment(${id})" title="Excluir"><i class="fas fa-trash"></i></button>
                         ` : ''}
                         ${isCancelled ? `
-                             <button class="btn-appt btn-appt-cancel btn-appt-icon" onclick="deleteAppointment(${app.id})" title="Excluir"><i class="fas fa-trash"></i></button>
+                             <button class="btn-appt btn-appt-cancel btn-appt-icon" onclick="deleteAppointment(${id})" title="Excluir"><i class="fas fa-trash"></i></button>
                         ` : ''}
                     </div>
                 </div>
