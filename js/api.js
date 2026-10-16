@@ -15,8 +15,8 @@ function getApiCandidates() {
 
 async function probeApiBase(base) {
     const urls = [
-        `${base}/health`,
         `${base}?route=health`,
+        `${base}/health`,
     ];
 
     for (const url of urls) {
@@ -25,6 +25,9 @@ async function probeApiBase(base) {
             const payload = await response.json();
             if (response.ok && payload.success) {
                 return { base, url, payload };
+            }
+            if (payload?.error?.includes('using password: NO')) {
+                return { base, url, payload, needsConfigLocal: true };
             }
         } catch {
             // tenta próxima URL
@@ -37,8 +40,14 @@ async function probeApiBase(base) {
 async function initApiConnection() {
     const candidates = getApiCandidates();
 
+    let needsConfigLocal = false;
+
     for (const base of candidates) {
         const result = await probeApiBase(base);
+        if (result?.needsConfigLocal) {
+            needsConfigLocal = true;
+            continue;
+        }
         if (result) {
             API_BASE = result.base;
             useApiMode = true;
@@ -49,7 +58,7 @@ async function initApiConnection() {
 
     useApiMode = false;
     loadFromLocalStorage();
-    setApiBanner(true);
+    setApiBanner(true, null, needsConfigLocal);
     return false;
 }
 
@@ -63,20 +72,32 @@ function saveLocalStorage() {
     localStorage.setItem('fisio_appointments', JSON.stringify(appointments));
 }
 
-function setApiBanner(offline, healthPayload = null) {
+function setApiBanner(offline, healthPayload = null, needsConfigLocal = false) {
     const banner = document.getElementById('api-offline-banner');
     if (!banner) return;
 
     if (offline) {
         banner.classList.remove('hidden');
-        banner.innerHTML = `
-            <i class="fas fa-triangle-exclamation"></i>
-            <span>
-                <strong>Banco offline:</strong> os cadastros ficam só neste celular/navegador.
-                Faça <code>git push</code> (auto-deploy) ou crie <code>api/config.local.php</code> no servidor. Teste
-                <a href="/api/health" target="_blank" rel="noopener">/api/health</a>.
-            </span>
-        `;
+        if (needsConfigLocal) {
+            banner.innerHTML = `
+                <i class="fas fa-triangle-exclamation"></i>
+                <span>
+                    <strong>Falta a senha do MySQL no servidor.</strong>
+                    No Hostinger (File Manager), em <code>api/</code>, copie
+                    <code>config.local.example.php</code> para <code>config.local.php</code>
+                    e preencha <code>DB_PASS</code>. Depois teste
+                    <a href="/api/index.php?route=health" target="_blank" rel="noopener">a API</a>.
+                </span>
+            `;
+        } else {
+            banner.innerHTML = `
+                <i class="fas fa-triangle-exclamation"></i>
+                <span>
+                    <strong>Banco offline:</strong> os cadastros ficam só neste celular/navegador.
+                    Confira se a pasta <code>api/</code> está no site e se o MySQL foi importado.
+                </span>
+            `;
+        }
         return;
     }
 

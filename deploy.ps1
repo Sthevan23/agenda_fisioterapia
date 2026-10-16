@@ -62,7 +62,7 @@ Write-Host ""
 
 $configRel = "api\config.local.php"
 if (-not (Test-Path (Join-Path $LocalRoot $configRel))) {
-    Write-Host "AVISO: api\config.local.php nao encontrado — crie no servidor apos deploy Git."
+    Write-Host "AVISO: api\config.local.php nao encontrado - crie no servidor apos deploy Git."
     $configRel = $null
 }
 

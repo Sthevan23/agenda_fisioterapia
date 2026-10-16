@@ -19,13 +19,21 @@ O repositório está pronto para **Advanced → Git → Connect with GitHub**. C
 
 ## 3. Senha da API (obrigatório após deploy)
 
-O Git **não** envia senha. No **File Manager**:
+O Git **não** envia senha. Escolha **uma** opção:
 
-1. Pasta `public_html/api/`
-2. Copie `config.local.example.php` → **`config.local.php`**
-3. Edite e coloque a senha real do MySQL em `DB_PASS`
+### Opção A — File Manager (recomendado)
 
-Sem `config.local.php`, `/api/health` responde erro de banco.
+1. `public_html/api/` → novo arquivo **`config.local.php`**
+2. Copie o conteúdo do arquivo local `api/COLE-NO-HOSTINGER-config.local.php` (só no seu PC) e salve no servidor.
+
+### Opção B — Variáveis PHP no hPanel
+
+**Advanced → PHP Configuration → PHP Variables**, adicione:
+
+- `FISIO_DB_PASS` = senha do MySQL
+- (opcional) `FISIO_DB_NAME`, `FISIO_DB_USER`, `FISIO_CORS_ORIGIN`
+
+Sem isso, `/api/index.php?route=health` responde erro de banco.
 
 ## 4. Testar
 
