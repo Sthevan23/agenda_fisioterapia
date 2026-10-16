@@ -1037,6 +1037,10 @@ body {
     border-radius: 8px;
     cursor: pointer;
     font-size: 0.875rem;
+    font-family: inherit;
+    font-weight: 600;
+    background: var(--surface);
+    color: var(--text);
     transition: all 0.2s ease;
 }
 

@@ -333,6 +333,23 @@
                         <div id="selected-dates-chips" class="date-chips"></div>
                         <input type="hidden" id="appointmentDate">
                     </div>
+                    <div class="form-group" id="appointment-times-panel">
+                        <label class="form-label">Horários</label>
+                        <p class="form-hint" id="time-slots-hint">Selecione os dias acima, depois toque no horário (ou escolha por dia na lista).</p>
+                        <div class="time-slots" id="timeSlots"></div>
+                        <div class="date-times-section hidden" id="date-times-section">
+                            <div class="date-times-header">
+                                <label class="form-label">Ajustar horário por dia</label>
+                                <div class="date-times-bulk">
+                                    <select class="form-select form-select--compact" id="bulk-time-select" aria-label="Horário para todos os dias">
+                                        <option value="">Mesmo horário para todos</option>
+                                    </select>
+                                    <button type="button" class="btn btn-secondary btn-sm" onclick="applyBulkTimeToAllDates()">Aplicar</button>
+                                </div>
+                            </div>
+                            <div id="date-time-rows" class="date-time-rows"></div>
+                        </div>
+                    </div>
                     <div class="form-row">
                         <div class="form-group">
                             <label class="form-label">Tipo de Consulta</label>
@@ -367,18 +384,6 @@
                             <option value="credito">Cartão de Crédito</option>
                             <option value="debito">Cartão de Débito</option>
                         </select>
-                    </div>
-                    <div class="form-group date-times-section hidden" id="date-times-section">
-                        <div class="date-times-header">
-                            <label class="form-label">Horário de cada dia</label>
-                            <div class="date-times-bulk">
-                                <select class="form-select form-select--compact" id="bulk-time-select" aria-label="Horário para todos os dias">
-                                    <option value="">Mesmo horário para todos</option>
-                                </select>
-                                <button type="button" class="btn btn-secondary btn-sm" onclick="applyBulkTimeToAllDates()">Aplicar</button>
-                            </div>
-                        </div>
-                        <div id="date-time-rows" class="date-time-rows"></div>
                     </div>
                     <div class="form-group">
                         <label class="form-label">Observações</label>

@@ -20,6 +20,7 @@ function openModal(initialDate = null) {
     document.body.style.overflow = 'hidden';
     renderDateChips();
     renderModalMonthPicker();
+    generateTimeSlots();
 }
 
 function closeModal() {
@@ -37,6 +38,7 @@ function closeModal() {
 
     renderDateChips();
     renderModalMonthPicker();
+    generateTimeSlots();
 }
 
 function toggleAppointmentDate(dateStr) {
@@ -134,6 +136,54 @@ function initAppointmentTimeSelects() {
     bulk.innerHTML = `<option value="">Mesmo horário para todos</option>${buildTimeOptions()}`;
 }
 
+function generateTimeSlots() {
+    const container = document.getElementById('timeSlots');
+    if (!container) return;
+
+    container.innerHTML = timeSlots.map(t => {
+        const active = selectedAppointmentDates.length === 1
+            && appointmentTimeByDate[selectedAppointmentDates[0]] === t;
+        const allSame = selectedAppointmentDates.length > 1
+            && selectedAppointmentDates.every(d => appointmentTimeByDate[d] === t)
+            && appointmentTimeByDate[selectedAppointmentDates[0]] === t;
+        const selected = active || allSame;
+        return `<button type="button" class="time-slot ${selected ? 'selected' : ''}" onclick="selectAppointmentTime('${t}')">${t}</button>`;
+    }).join('');
+
+    updateTimeSlotsHint();
+}
+
+function updateTimeSlotsHint() {
+    const hint = document.getElementById('time-slots-hint');
+    if (!hint) return;
+
+    if (selectedAppointmentDates.length === 0) {
+        hint.textContent = 'Primeiro selecione um ou mais dias no calendário.';
+        return;
+    }
+
+    if (selectedAppointmentDates.length === 1) {
+        hint.textContent = 'Toque no horário desejado para este dia.';
+        return;
+    }
+
+    hint.textContent = 'Toque em um horário para aplicar a todos os dias (ou ajuste na lista abaixo).';
+}
+
+function selectAppointmentTime(time) {
+    if (!selectedAppointmentDates.length) {
+        showToast('Selecione pelo menos um dia antes do horário.', 'error');
+        return;
+    }
+
+    selectedAppointmentDates.forEach(dateStr => {
+        appointmentTimeByDate[dateStr] = time;
+    });
+
+    generateTimeSlots();
+    renderDateTimeRows();
+}
+
 function setAppointmentTimeForDate(dateStr, time) {
     if (!dateStr) return;
     if (time) {
@@ -141,6 +191,7 @@ function setAppointmentTimeForDate(dateStr, time) {
     } else {
         delete appointmentTimeByDate[dateStr];
     }
+    generateTimeSlots();
 }
 
 function applyBulkTimeToAllDates() {
@@ -154,6 +205,7 @@ function applyBulkTimeToAllDates() {
         appointmentTimeByDate[dateStr] = time;
     });
     renderDateTimeRows();
+    generateTimeSlots();
     showToast('Horário aplicado a todos os dias.');
 }
 
@@ -165,6 +217,13 @@ function renderDateTimeRows() {
     if (selectedAppointmentDates.length === 0) {
         section.classList.add('hidden');
         container.innerHTML = '';
+        return;
+    }
+
+    if (selectedAppointmentDates.length <= 1) {
+        section.classList.add('hidden');
+        container.innerHTML = '';
+        generateTimeSlots();
         return;
     }
 
@@ -184,6 +243,7 @@ function renderDateTimeRows() {
             </div>
         `;
     }).join('');
+    generateTimeSlots();
 }
 
 function changeModalPickerMonth(delta) {
