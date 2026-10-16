@@ -161,24 +161,20 @@ function renderPatientList(search = '') {
 
         return `
         <div class="patient-item">
-            <div class="patient-avatar ${avatarClass}">
+            <div class="patient-avatar patient-avatar--sm ${avatarClass}">
                 <i class="fas ${iconClass}"></i>
             </div>
-            <div class="patient-info">
-                <div class="patient-name-text">
-                    ${p.name}
-                    ${getAgeBadge(p.age)}
-                </div>
-                <div class="patient-phone-text">${p.phone}</div>
+            <div class="patient-main">
+                <span class="patient-name-text" title="${p.name}">${p.name}</span>
+                ${p.age ? `<span class="patient-age-inline">${p.age} anos</span>` : ''}
+                <span class="patient-meta-dot" aria-hidden="true">·</span>
+                <span class="patient-phone-text">${p.phone}</span>
             </div>
-            <div class="patient-age-box">
-                <div class="patient-age-text">${p.age ? p.age + ' anos' : '—'}</div>
-            </div>
-            <div class="patient-actions">
-                <button class="btn btn-secondary" onclick="openPatientModal(${p.id})">
+            <div class="patient-actions patient-actions--compact">
+                <button type="button" class="btn btn-secondary btn-icon" onclick="openPatientModal(${p.id})" title="Editar">
                     <i class="fas fa-edit"></i>
                 </button>
-                <button class="btn btn-danger-outline" onclick="deletePatient(${p.id})">
+                <button type="button" class="btn btn-danger-outline btn-icon" onclick="deletePatient(${p.id})" title="Excluir">
                     <i class="fas fa-trash"></i>
                 </button>
             </div>
