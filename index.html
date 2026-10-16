@@ -320,6 +320,14 @@
                                     Limpar datas
                                 </button>
                             </div>
+                            <div class="date-count-quick">
+                                <span>Próximos</span>
+                                <input type="number" class="form-input date-count-input" id="quick-day-count" min="1" max="60" value="5" aria-label="Quantidade de dias">
+                                <span>dias úteis</span>
+                                <button type="button" class="btn btn-secondary btn-sm" onclick="addNextWeekdaysFromInput()">
+                                    <i class="fas fa-plus"></i> Adicionar
+                                </button>
+                            </div>
                         </div>
                         <p class="selected-dates-count" id="selected-dates-count">0 dias selecionados</p>
                         <div id="selected-dates-chips" class="date-chips"></div>
@@ -360,10 +368,17 @@
                             <option value="debito">Cartão de Débito</option>
                         </select>
                     </div>
-                    <div class="form-group">
-                        <label class="form-label">Horário Disponível</label>
-                        <div class="time-slots" id="timeSlots"></div>
-                        <input type="hidden" id="selectedTime" required>
+                    <div class="form-group date-times-section hidden" id="date-times-section">
+                        <div class="date-times-header">
+                            <label class="form-label">Horário de cada dia</label>
+                            <div class="date-times-bulk">
+                                <select class="form-select form-select--compact" id="bulk-time-select" aria-label="Horário para todos os dias">
+                                    <option value="">Mesmo horário para todos</option>
+                                </select>
+                                <button type="button" class="btn btn-secondary btn-sm" onclick="applyBulkTimeToAllDates()">Aplicar</button>
+                            </div>
+                        </div>
+                        <div id="date-time-rows" class="date-time-rows"></div>
                     </div>
                     <div class="form-group">
                         <label class="form-label">Observações</label>

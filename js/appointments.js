@@ -12,6 +12,7 @@ function openModal(initialDate = null) {
         modalPickerMonth = new Date(initialDate + 'T12:00:00');
     } else {
         selectedAppointmentDates = [];
+        appointmentTimeByDate = {};
         modalPickerMonth = new Date();
     }
 
@@ -26,6 +27,7 @@ function closeModal() {
     document.body.style.overflow = '';
     document.getElementById('appointmentForm').reset();
     selectedAppointmentDates = [];
+    appointmentTimeByDate = {};
 
     const searchInput = document.getElementById('patient-select-search');
     if (searchInput) {
@@ -33,7 +35,6 @@ function closeModal() {
         renderPatientSelect();
     }
 
-    document.querySelectorAll('.time-slot').forEach(s => s.classList.remove('selected'));
     renderDateChips();
     renderModalMonthPicker();
 }
@@ -72,12 +73,117 @@ function addAppointmentDate(dateStr, showDuplicateToast = true) {
 
 function removeAppointmentDate(dateStr) {
     selectedAppointmentDates = selectedAppointmentDates.filter(d => d !== dateStr);
+    delete appointmentTimeByDate[dateStr];
     renderDateChips();
 }
 
 function clearAppointmentDates() {
     selectedAppointmentDates = [];
+    appointmentTimeByDate = {};
     renderDateChips();
+}
+
+function addNextWeekdaysFromInput() {
+    const input = document.getElementById('quick-day-count');
+    const count = Math.min(60, Math.max(1, parseInt(input?.value, 10) || 1));
+    addNextWeekdays(count);
+}
+
+function addNextWeekdays(count) {
+    const minDate = getMinAppointmentDateStr();
+    let cursor = new Date();
+    cursor.setHours(12, 0, 0, 0);
+    if (formatDateISO(cursor) < minDate) {
+        cursor.setDate(cursor.getDate() + 1);
+    }
+
+    let added = 0;
+    let guard = 0;
+    while (added < count && guard < 400) {
+        guard++;
+        const weekday = cursor.getDay();
+        if (weekday >= 1 && weekday <= 5) {
+            const dateStr = formatDateISO(cursor);
+            if (dateStr >= minDate && !selectedAppointmentDates.includes(dateStr)) {
+                selectedAppointmentDates.push(dateStr);
+                added++;
+            }
+        }
+        cursor.setDate(cursor.getDate() + 1);
+    }
+
+    selectedAppointmentDates.sort();
+    renderDateChips();
+
+    if (added === 0) {
+        showToast('Nenhum dia útil novo para adicionar.', 'error');
+    } else {
+        showToast(`${added} dia(s) úteis adicionados.`);
+    }
+}
+
+function buildTimeOptions(selected = '') {
+    return timeSlots.map(t =>
+        `<option value="${t}" ${t === selected ? 'selected' : ''}>${t}</option>`
+    ).join('');
+}
+
+function initAppointmentTimeSelects() {
+    const bulk = document.getElementById('bulk-time-select');
+    if (!bulk) return;
+    bulk.innerHTML = `<option value="">Mesmo horário para todos</option>${buildTimeOptions()}`;
+}
+
+function setAppointmentTimeForDate(dateStr, time) {
+    if (!dateStr) return;
+    if (time) {
+        appointmentTimeByDate[dateStr] = time;
+    } else {
+        delete appointmentTimeByDate[dateStr];
+    }
+}
+
+function applyBulkTimeToAllDates() {
+    const bulk = document.getElementById('bulk-time-select');
+    const time = bulk?.value;
+    if (!time) {
+        showToast('Escolha um horário para aplicar a todos.', 'error');
+        return;
+    }
+    selectedAppointmentDates.forEach(dateStr => {
+        appointmentTimeByDate[dateStr] = time;
+    });
+    renderDateTimeRows();
+    showToast('Horário aplicado a todos os dias.');
+}
+
+function renderDateTimeRows() {
+    const section = document.getElementById('date-times-section');
+    const container = document.getElementById('date-time-rows');
+    if (!section || !container) return;
+
+    if (selectedAppointmentDates.length === 0) {
+        section.classList.add('hidden');
+        container.innerHTML = '';
+        return;
+    }
+
+    section.classList.remove('hidden');
+    container.innerHTML = selectedAppointmentDates.map(dateStr => {
+        const selected = appointmentTimeByDate[dateStr] || '';
+        return `
+            <div class="date-time-row">
+                <span class="date-time-row__label">${formatDateLabel(dateStr)}</span>
+                <select class="form-select date-time-row__select"
+                    data-date="${dateStr}"
+                    onchange="setAppointmentTimeForDate('${dateStr}', this.value)"
+                    required>
+                    <option value="">Horário</option>
+                    ${buildTimeOptions(selected)}
+                </select>
+            </div>
+        `;
+    }).join('');
 }
 
 function changeModalPickerMonth(delta) {
@@ -173,8 +279,10 @@ function renderDateChips() {
 
     renderModalMonthPicker();
 
+    renderDateTimeRows();
+
     if (count === 0) {
-        container.innerHTML = '<p class="date-chips-empty">Nenhum dia marcado. Clique no calendário acima.</p>';
+        container.innerHTML = '<p class="date-chips-empty">Nenhum dia marcado. Clique no calendário ou use &quot;Próximos N dias úteis&quot;.</p>';
         if (hidden) hidden.value = '';
         if (saveBtn) {
             saveBtn.innerHTML = '<i class="fas fa-check"></i> Confirmar';
@@ -209,22 +317,9 @@ function formatDateLabel(dateStr) {
     return `${weekday}, ${d.getDate()}/${d.getMonth() + 1}/${d.getFullYear()}`;
 }
 
-function generateTimeSlots() {
-    document.getElementById('timeSlots').innerHTML = timeSlots.map(t =>
-        `<div class="time-slot" onclick="selectTime(this,'${t}')">${t}</div>`
-    ).join('');
-}
-
-function selectTime(el, time) {
-    document.querySelectorAll('.time-slot').forEach(s => s.classList.remove('selected'));
-    el.classList.add('selected');
-    document.getElementById('selectedTime').value = time;
-}
-
 async function saveAppointment() {
     const patientId = document.getElementById('patientSelect').value;
     const dates = [...selectedAppointmentDates];
-    const time = document.getElementById('selectedTime').value;
 
     const type = document.getElementById('appointmentType').value;
     const valueInput = document.getElementById('appointmentValue').value;
@@ -234,7 +329,12 @@ async function saveAppointment() {
 
     if (!patientId) return showToast('Selecione um paciente', 'error');
     if (dates.length === 0) return showToast('Adicione pelo menos uma data', 'error');
-    if (!time) return showToast('Selecione um horário', 'error');
+
+    const missingTime = dates.filter(d => !appointmentTimeByDate[d]);
+    if (missingTime.length) {
+        showToast('Defina o horário de cada dia selecionado.', 'error');
+        return;
+    }
     if (!valueInput || valueInput === 'R$ 0,00') return showToast('Informe o valor da consulta', 'error');
     if (!category) return showToast('Selecione a categoria', 'error');
     if (!payment) return showToast('Selecione a forma de pagamento', 'error');
@@ -249,7 +349,6 @@ async function saveAppointment() {
 
     const payloadBase = {
         patientId: parseInt(patientId),
-        time,
         type,
         value,
         category,
@@ -263,9 +362,10 @@ async function saveAppointment() {
     let failCount = 0;
 
     for (const date of dates) {
+        const time = appointmentTimeByDate[date];
         try {
             if (useApiMode) {
-                const created = await api.createAppointment({ ...payloadBase, date });
+                const created = await api.createAppointment({ ...payloadBase, date, time });
                 appointments.push(created);
             } else {
                 appointments.push({
@@ -273,6 +373,7 @@ async function saveAppointment() {
                     patientId: patient.id,
                     patient: patient.name,
                     date,
+                    time,
                     ...payloadBase,
                 });
             }

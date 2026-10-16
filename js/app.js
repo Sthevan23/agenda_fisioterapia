@@ -15,7 +15,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     renderPatientSelect();
     renderPatientList();
     renderHistory();
-    generateTimeSlots();
+    initAppointmentTimeSelects();
     updateStats();
 
     document.getElementById('patient-search')?.addEventListener('input', e => {
