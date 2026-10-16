@@ -39,4 +39,5 @@ PASSO 4 - TESTAR
 1. https://SEUDOMINIO.com/api/health  (deve retornar JSON ok)
 2. https://SEUDOMINIO.com             (abrir o sistema)
 
+Auto-deploy Git? Leia HOSTINGER-GIT.md
 Duvidas? Leia HOSTINGER.md

@@ -73,8 +73,7 @@ function setApiBanner(offline, healthPayload = null) {
             <i class="fas fa-triangle-exclamation"></i>
             <span>
                 <strong>Banco offline:</strong> os cadastros ficam só neste celular/navegador.
-                No Hostinger, envie a pasta <code>api/</code> + <code>.htaccess</code> para
-                <code>domains/fisio.sthevandev.com.br/public_html</code> e teste
+                Faça <code>git push</code> (auto-deploy) ou crie <code>api/config.local.php</code> no servidor. Teste
                 <a href="/api/health" target="_blank" rel="noopener">/api/health</a>.
             </span>
         `;

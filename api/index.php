@@ -8,7 +8,7 @@ if (!file_exists($configFile)) {
     header('Content-Type: application/json; charset=utf-8');
     echo json_encode([
         'success' => false,
-        'error' => 'Arquivo config.php não encontrado. Copie config.example.php para config.php',
+        'error' => 'config.php não encontrado. No Git deploy, crie api/config.local.php a partir de config.local.example.php',
     ], JSON_UNESCAPED_UNICODE);
     exit;
 }

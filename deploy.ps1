@@ -57,14 +57,13 @@ $stylesDir = Join-Path $LocalRoot "styles.css"
 if (-not (Test-Path $stylesDir)) {
     New-Item -ItemType Directory -Path $stylesDir | Out-Null
 }
-Copy-Item (Join-Path $LocalRoot "css\global.css") (Join-Path $stylesDir "index.css") -Force
-Write-Host "CSS sincronizado: css/global.css -> styles.css/index.css"
+"@import url('../css/global.css');" | Set-Content (Join-Path $stylesDir "index.css") -Encoding UTF8
 Write-Host ""
 
-$configRel = "api\config.php"
-if (-not (Test-Path (Join-Path $LocalRoot $configRel)) -and (Test-Path (Join-Path $LocalRoot "deploy-pack\api\config.php"))) {
-    Write-Host "Usando deploy-pack\api\config.php para upload (api\config.php local ausente)."
-    $configRel = "deploy-pack\api\config.php"
+$configRel = "api\config.local.php"
+if (-not (Test-Path (Join-Path $LocalRoot $configRel))) {
+    Write-Host "AVISO: api\config.local.php nao encontrado — crie no servidor apos deploy Git."
+    $configRel = $null
 }
 
 $dirs = @(
@@ -85,7 +84,8 @@ $files = @(
     @("css\global.css", "$RemoteRoot/css/global.css"),
     @("styles.css\index.css", "$RemoteRoot/styles.css/index.css"),
     @("api\index.php", "$RemoteRoot/api/index.php"),
-    @($configRel, "$RemoteRoot/api/config.php"),
+    @("api\config.php", "$RemoteRoot/api/config.php"),
+    @("api\config.local.example.php", "$RemoteRoot/api/config.local.example.php"),
     @("api\database.sql", "$RemoteRoot/api/database.sql"),
     @("api\.htaccess", "$RemoteRoot/api/.htaccess"),
     @("api\lib\db.php", "$RemoteRoot/api/lib/db.php"),
@@ -96,6 +96,10 @@ $files = @(
 
 Get-ChildItem "$LocalRoot\js\*.js" | ForEach-Object {
     $files += @(@($_.FullName.Substring($LocalRoot.Length + 1), "$RemoteRoot/js/$($_.Name)"))
+}
+
+if ($configRel) {
+    $files += @(@($configRel, "$RemoteRoot/api/config.local.php"))
 }
 
 foreach ($f in $files) {
